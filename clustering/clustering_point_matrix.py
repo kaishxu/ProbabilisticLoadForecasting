@@ -14,7 +14,6 @@ dist = 'hierarchical/DTW'
 attr = pd.read_csv('./data/' + data_set + '_attr_final.csv')
 
 # Hierarchical clustering (Construct the matrix)
-labels = []
 for month in range(12):
 
     X = []
