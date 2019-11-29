@@ -18,7 +18,7 @@ dist = 'hierarchical/hausdorff'
 attr = pd.read_csv('./data/' + data_set + '_attr_final.csv')
 
 # Hierarchical clustering (Construct the matrix)
-for month in range(8, 12):
+for month in range(12):
 
     X = []
     for i in range(len(attr)):
