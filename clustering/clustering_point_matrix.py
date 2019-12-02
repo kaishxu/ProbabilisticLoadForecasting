@@ -37,7 +37,7 @@ def main(data_set, attr, dist):
 
 if __name__ == '__main__':
 
-    data_set = 'London_2013'
+    data_set = 'Irish_2010'
     dist = 'hierarchical/DTW'
     attr = pd.read_csv('./data/' + data_set + '_attr_final.csv')
     main(data_set, attr, dist)
