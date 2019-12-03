@@ -1,3 +1,6 @@
+# Hierarchical clustering (interval)
+# Construct the similarity matrix for euclidean, cityblock, and hausdorff distance
+
 import pandas as pd
 import numpy as np
 import multiprocessing
@@ -13,7 +16,6 @@ def distance(x, y, dist):
         tmp = hausdorff_distance(x.T, y.T)
     return tmp
 
-# Hierarchical clustering (Construct the matrix)
 def main(data_set, attr, dist):
     for month in range(12):
 
@@ -44,6 +46,7 @@ def main(data_set, attr, dist):
 
 if __name__ == '__main__':
     
+    # data_set: Irish_2010, London_2013
     data_set = 'London_2013'
     dist = 'hierarchical/euclidean'
     attr = pd.read_csv('./data/' + data_set + '_attr_final.csv')

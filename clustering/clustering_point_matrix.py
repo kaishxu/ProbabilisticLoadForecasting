@@ -1,3 +1,6 @@
+# Hierarchical clustering (point)
+# Construct the similarity matrix for DTW distance
+
 import pandas as pd
 import numpy as np
 from dtw import accelerated_dtw
@@ -9,7 +12,6 @@ def fastdtw(x, y):
     dist, cost_matrix, acc_cost_matrix, path = accelerated_dtw(x, y, euclidean)
     return dist
 
-# Hierarchical clustering (Construct the matrix)
 def main(data_set, attr, dist):
     for month in range(12):
 
@@ -37,6 +39,7 @@ def main(data_set, attr, dist):
 
 if __name__ == '__main__':
 
+    # data_set: Irish_2010, London_2013
     data_set = 'Irish_2010'
     dist = 'hierarchical/DTW'
     attr = pd.read_csv('./data/' + data_set + '_attr_final.csv')
