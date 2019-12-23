@@ -5,14 +5,21 @@ import os
 from tqdm import trange
 import json
 
-
+months = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
 methods = ['hierarchical/euclidean', 'hierarchical/cityblock', 'hierarchical/hausdorff', 'kmeans']
 data_sets = ['Irish_2010', 'London_2013']
 
 path = os.path.abspath(os.path.join(os.getcwd(), '../..'))
 
 for data_set in data_sets:
+
     attr = pd.read_csv(os.path.join(path, 'data', f'{data_set}_attr_final.csv'))
+    data = []
+    for i in trange(len(attr)):
+        id = attr['ID'][i]
+        df = pd.read_csv(os.path.join(path, 'data', f'{data_set}_monthly_interval', f'{id}.csv'), header = None).values
+        data.append(df)
+    data = np.array(data)
 
     for method in methods:
         for n_clusters in range(2, 11):
@@ -20,14 +27,8 @@ for data_set in data_sets:
 
                 path_cluster = os.path.join(path, 'result', data_set, 'clustering', 'interval', method, f'n_clusters_{n_clusters}.csv')
                 clusters = pd.read_csv(path_cluster, header=None)
-
-                series = []
-                for i in trange(len(attr)):
-                    id = attr['ID'][i]
-                    df = pd.read_csv(os.path.join(path, 'data', f'{data_set}_monthly_interval', f'{id}.csv'), header = None).values
-                    df = df[(month-1)*2:month*2, :]
-                    series.append(df)
-                series = np.array(series)
+                series = data[:, (month-1)*2:month*2, :months[month-1]*24]
+                print('Start train...', 'Month: ', month, 'Series shape: ', series.shape)
 
                 total_pred_series = []
                 total_xs = []
@@ -65,4 +66,4 @@ for data_set in data_sets:
                 np.save(os.path.join(path_result, f'n_clusters_{n_clusters}_month_{month}.npy'), total_pred_series)
                 np.save(os.path.join(path_result, f'n_clusters_{n_clusters}_month_{month}_params.npy'), total_xs)
 
-                print('data_set:, ', data_set, 'method: ', method, 'n_clusters: ', n_clusters, 'month: ', month)
+                print('Finish train...', 'data_set: ', data_set, 'method: ', method, 'n_clusters: ', n_clusters, 'month: ', month)
