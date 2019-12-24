@@ -35,8 +35,12 @@ for data_set in data_sets:
                 print('Start!')
 
                 total_pred_series = []
-                total_xs = []
                 total_scale = []
+
+                path_result = os.path.join(path, 'result', data_set, 'forecasting', 'imlp', method)
+                if not os.path.exists(path_result):
+                    os.makedirs(path_result)
+
                 for i in range(n_clusters):
 
                     index = list(clusters[month-1] == i)
@@ -78,13 +82,15 @@ for data_set in data_sets:
                     
                     pred_c, pred_r = model.predict(x=[testX_c, testX_r])
 
+                    model.save(os.path.join(path_result, f'n_clusters_{n_clusters}_month_{month}_for_{i}.h5'))
+                    pred_series = np.vstack((np.squeeze((pred_c - pred_r) / 2), np.squeeze((pred_c + pred_r) / 2)))
+                    total_pred_series.append(pred_series)
+
                 total_pred_series = np.array(total_pred_series)
-                total_xs = np.array(total_xs)
                 total_scale = np.array(total_scale)
-                path_result = os.path.join(path, 'result', data_set, 'forecasting', 'interval', method)
+
                 np.save(os.path.join(path_result, f'n_clusters_{n_clusters}_month_{month}.npy'), total_pred_series)
-                np.save(os.path.join(path_result, f'n_clusters_{n_clusters}_month_{month}_params.npy'), total_xs)
                 np.save(os.path.join(path_result, f'n_clusters_{n_clusters}_month_{month}_scale.npy'), total_scale)
 
-                del series, sub_series, train, test, total_pred_series, total_xs, total_scale
+                del series, sub_series, train, test, total_pred_series, total_scale
                 print('Finish!')

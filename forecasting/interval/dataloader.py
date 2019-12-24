@@ -30,7 +30,7 @@ def get_train_set(data, lag, d):
 def get_test_set(data, test, lag, d):
     l = np.maximum(d * 24, lag)
     
-    data = np.hstack((train[:, -l:], test))
+    data = np.hstack((data[:, -l:], test))
     
     total_X = []
     total_Y = []

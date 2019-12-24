@@ -74,8 +74,8 @@ for times in range(2, 11):
                     total_pred_series = np.array(total_pred_series)
                     total_xs = np.array(total_xs)
                     total_scale = np.array(total_scale)
+                    
                     path_result = os.path.join(path, 'result', data_set, 'forecasting', 'iholt', f'times_{times}', method)
-
                     if not os.path.exists(path_result):
                         os.makedirs(path_result)
                         
