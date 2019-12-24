@@ -1,9 +1,10 @@
+import os
 import numpy as np
 import pandas as pd
-from iholt import Holt_model
-import os
 from tqdm import trange
-import json
+
+from dataloader import get_train_set, get_test_set
+from imlp import iAct, iLoss, get_model
 
 months = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
 methods = ['hierarchical/euclidean', 'hierarchical/cityblock', 'hierarchical/hausdorff', 'kmeans']
@@ -27,6 +28,7 @@ for data_set in data_sets:
                 
                 path_cluster = os.path.join(path, 'result', data_set, 'clustering', 'interval', method, f'n_clusters_{n_clusters}.csv')
                 clusters = pd.read_csv(path_cluster, header=None)
+                
                 series = data[:, (month-1)*2:month*2, :months[month-1]*24]
                 
                 print('data_set:', data_set, ', method:', method, ', n_clusters:', n_clusters, ', month:', month, ', series shape:', series.shape)
@@ -36,13 +38,16 @@ for data_set in data_sets:
                 total_xs = []
                 total_scale = []
                 for i in range(n_clusters):
-                    print('cluster:', i)
+
                     index = list(clusters[month-1] == i)
                     sub_series = series[index]
                     sub_series = np.sum(sub_series, axis=0)
+
+                    # split
                     test = sub_series[:, -168:]
                     train = sub_series[:, :-168]
 
+                    # normalize
                     scale = np.zeros(2)
                     scale[0] = np.max(train)
                     scale[1] = np.min(train)
@@ -50,29 +55,28 @@ for data_set in data_sets:
                     train = (train - scale[1])/(scale[0] - scale[1])
                     test = (test - scale[1])/(scale[0] - scale[1])
                     
-                    # test window (h = 1, 2, ..., 7)
-                    pred_series = []
-                    xs = []
-                    for h in range(1, 8):
-
-                        # Build model
-                        holt_model = Holt_model(np.hstack((train, test[:, :(h-1)*24])))
-
-                        # Optimize
-                        bnds = [[0, 1]] * 8
-                        x0 = np.ones(8) * 0.5   # Parameters [a11, a12, a21, a22, b11, b12, b21, b22]
-                        result = holt_model.train(x0, bnds)
-                        It, Lt, Tt = holt_model.pred(result.x, 24, test[:, (h-1)*24:h*24])
-                        pred_series.append(np.squeeze(np.array(It)).T[:, -24:])
-                        xs.append(result.x)
-
-                        print('h:', h, result.success)
-                        del holt_model
+                    # recency effect
+                    lag = 12
+                    d = 1
                     
-                    pred_series = np.array(pred_series)
-                    xs = np.array(xs)
-                    total_pred_series.append(pred_series)
-                    total_xs.append(xs)
+                    trainX_c, trainX_r, trainY_c, trainY_r = get_train_set(train, lag, d)
+                    testX_c, testX_r, testY_c, testY_r = get_test_set(train, test, lag, d)
+                    
+                    # Parameters
+                    input_dim = lag + d
+                    output_dim = 1
+                    num_hidden_layers = 1
+                    num_units = [6]
+                    act = ['tanh']
+                    beta = 0.5
+
+                    # Get model
+                    model = get_model(input_dim, output_dim, num_units, act, beta, num_hidden_layers)
+
+                    # Train
+                    model.fit(x=[trainX_c, trainX_r], y=[trainY_c, trainY_r], epochs=500, verbose=0)
+                    
+                    pred_c, pred_r = model.predict(x=[testX_c, testX_r])
 
                 total_pred_series = np.array(total_pred_series)
                 total_xs = np.array(total_xs)
@@ -82,5 +86,5 @@ for data_set in data_sets:
                 np.save(os.path.join(path_result, f'n_clusters_{n_clusters}_month_{month}_params.npy'), total_xs)
                 np.save(os.path.join(path_result, f'n_clusters_{n_clusters}_month_{month}_scale.npy'), total_scale)
 
-                del series, sub_series, train, test, result, total_pred_series, total_xs, total_scale
+                del series, sub_series, train, test, total_pred_series, total_xs, total_scale
                 print('Finish!')

@@ -8,7 +8,7 @@ import numpy as np
 
 # Activation layer
 class iAct(Layer):
-    def __init__(self, activation, **kwargs):
+    def __init__(self, activation='tanh', **kwargs):
         self.activation = activations.get(activation)
         super(iAct, self).__init__(**kwargs)
 
@@ -23,7 +23,7 @@ class iAct(Layer):
 
 # Loss layer, no training required, only for making a custom loss function
 class iLoss(Layer):
-    def __init__(self, beta, **kwargs):
+    def __init__(self, beta=0.5, **kwargs):
         self.beta = beta
         super(iLoss, self).__init__(**kwargs)
 
@@ -35,12 +35,15 @@ class iLoss(Layer):
 def get_model(input_dim, output_dim, num_units, activation, beta=0.5, num_hidden_layers=1):
     center_x = Input((input_dim,), name='center_input')
     radius_x = Input((input_dim,), name='radius_input')
-
+    
+    c = center_x
+    r = radius_x
+    
     for i in range(num_hidden_layers):
         c = Dense(num_units[i], use_bias=True, kernel_initializer='he_normal', bias_initializer='he_normal', 
-                kernel_regularizer=regularizers.l2(0.001))(center_x)
+                kernel_regularizer=regularizers.l2(0.001))(c)
         r = Dense(num_units[i], use_bias=False, kernel_initializer='he_normal', 
-                kernel_regularizer=regularizers.l2(0.001))(radius_x)
+                kernel_regularizer=regularizers.l2(0.001))(r)
         c, r = iAct(activation[i])([c, r])
 
     c = Dense(output_dim, use_bias=True, kernel_initializer='he_normal', bias_initializer='he_normal')(c)
