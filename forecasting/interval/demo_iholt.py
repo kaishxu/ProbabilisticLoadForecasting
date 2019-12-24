@@ -24,15 +24,19 @@ for data_set in data_sets:
     for method in methods:
         for n_clusters in range(2, 11):
             for month in range(1, 13):
-
+                
                 path_cluster = os.path.join(path, 'result', data_set, 'clustering', 'interval', method, f'n_clusters_{n_clusters}.csv')
                 clusters = pd.read_csv(path_cluster, header=None)
                 series = data[:, (month-1)*2:month*2, :months[month-1]*24]
+                
+                print('data_set:', data_set, ', method:', method, ', n_clusters:', n_clusters, ', month:', month, ', series shape:', series.shape)
+                print('Start!')
 
                 total_pred_series = []
                 total_xs = []
                 total_scale = []
                 for i in range(n_clusters):
+                    print('cluster:', i)
                     index = list(clusters[month-1] == i)
                     sub_series = series[index]
                     sub_series = np.sum(sub_series, axis=0)
@@ -61,6 +65,9 @@ for data_set in data_sets:
                         It, Lt, Tt = holt_model.pred(result.x, 24, test[:, (h-1)*24:h*24])
                         pred_series.append(np.squeeze(np.array(It)).T[:, -24:])
                         xs.append(result.x)
+
+                        print('h:', h, result.success)
+                        del holt_model
                     
                     pred_series = np.array(pred_series)
                     xs = np.array(xs)
@@ -75,6 +82,5 @@ for data_set in data_sets:
                 np.save(os.path.join(path_result, f'n_clusters_{n_clusters}_month_{month}_params.npy'), total_xs)
                 np.save(os.path.join(path_result, f'n_clusters_{n_clusters}_month_{month}_scale.npy'), total_scale)
 
-                print('data_set:', data_set, ', method:', method, ', n_clusters:', n_clusters, ', month:', month, ', series shape:', series.shape)
                 del series, sub_series, train, test, result
-                
+                print('Finish!')
