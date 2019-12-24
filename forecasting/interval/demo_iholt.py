@@ -75,5 +75,6 @@ for data_set in data_sets:
                 np.save(os.path.join(path_result, f'n_clusters_{n_clusters}_month_{month}_params.npy'), total_xs)
                 np.save(os.path.join(path_result, f'n_clusters_{n_clusters}_month_{month}_scale.npy'), total_scale)
 
-                del series, sub_series, train, test, result
                 print('data_set:', data_set, ', method:', method, ', n_clusters:', n_clusters, ', month:', month, ', series shape:', series.shape)
+                del series, sub_series, train, test, result
+                
