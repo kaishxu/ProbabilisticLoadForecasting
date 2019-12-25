@@ -5,6 +5,9 @@ from tqdm import trange
 
 from dataloader import get_train_set, get_test_set
 from imlp import iAct, iLoss, get_model
+import tensorflow as tf
+
+tf.config.gpu.set_per_process_memory_growth(enabled=True)
 
 months = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
 methods = ['hierarchical/euclidean', 'hierarchical/cityblock', 'hierarchical/hausdorff', 'kmeans']
