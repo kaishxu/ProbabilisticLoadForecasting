@@ -3,6 +3,7 @@ import pandas as pd
 from iholt import Holt_model
 import os
 from tqdm import trange
+import gc
 
 months = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
 methods = ['hierarchical/euclidean', 'hierarchical/cityblock', 'hierarchical/hausdorff', 'kmeans']
@@ -69,6 +70,7 @@ for times in range(2, 11):
                         total_xs.append(result.x)
                         print('cluster:', i, 'train status:', result.success)
                         del holt_model, result
+                        gc.collect()
 
                     total_pred_series = np.array(total_pred_series)
                     total_xs = np.array(total_xs)
