@@ -101,7 +101,7 @@ if __name__ == "__main__":
                             total_pred_series.append(pred_series)
                             print('cluster:', i)
                             
-                            tensorflow.keras.backend.clear_session()
+                            tf.keras.backend.clear_session()
                             del sub_series, train, test, trainX_c, trainX_r, trainY_c, trainY_r, testX_c, testX_r, testY_c, testY_r
                             gc.collect()
 
