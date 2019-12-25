@@ -13,6 +13,7 @@ import tensorflow as tf
 gpus = tf.config.experimental.list_physical_devices(device_type='GPU')
 cpus = tf.config.experimental.list_physical_devices(device_type='CPU')
 tf.config.experimental.set_memory_growth(gpus[0], True)
+tf.config.experimental.set_virtual_device_configuration(gpus[0])
 
 months = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
 methods = ['hierarchical/euclidean', 'hierarchical/cityblock', 'hierarchical/hausdorff', 'kmeans']
@@ -82,24 +83,22 @@ for times in range(1, 11):
                         num_units = [10]
                         act = ['tanh']
                         beta = 0.5
+
+                        start = time.clock()
+                        # Get model
+                        model = get_model(input_dim, output_dim, num_units, act, beta, num_hidden_layers)
+
+                        # Train
+                        model.fit(x=[trainX_c, trainX_r], y=[trainY_c, trainY_r], epochs=800, verbose=0)
+                        pred_c, pred_r = model.predict(x=[testX_c, testX_r])
                         
-                        with tf.device(gpus[0]):
+                        end = time.clock()
+                        print(end - start)
 
-                            start = time.clock()
-                            # Get model
-                            model = get_model(input_dim, output_dim, num_units, act, beta, num_hidden_layers)
-
-                            # Train
-                            model.fit(x=[trainX_c, trainX_r], y=[trainY_c, trainY_r], epochs=800, verbose=0)
-                            
-                            pred_c, pred_r = model.predict(x=[testX_c, testX_r])
-                            end = time.clock()
-                            print(end - start)
-
-                            model.save(os.path.join(path_result, f'n_clusters_{n_clusters}_month_{month}_for_{i}.h5'))
-                            pred_series = np.vstack((np.squeeze((pred_c - pred_r) / 2), np.squeeze((pred_c + pred_r) / 2)))
-                            total_pred_series.append(pred_series)
-                            print('cluster:', i)
+                        model.save(os.path.join(path_result, f'n_clusters_{n_clusters}_month_{month}_for_{i}.h5'))
+                        pred_series = np.vstack((np.squeeze((pred_c - pred_r) / 2), np.squeeze((pred_c + pred_r) / 2)))
+                        total_pred_series.append(pred_series)
+                        print('cluster:', i)
                         
                         del model
 
