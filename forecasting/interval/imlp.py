@@ -5,6 +5,7 @@ from keras.models import Model
 from keras.engine.topology import Layer
 from keras import regularizers
 import numpy as np
+from keras.optimizers import Adam
 
 # Activation layer
 class iAct(Layer):
