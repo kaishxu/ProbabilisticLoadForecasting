@@ -31,7 +31,6 @@ for times in range(2, 11):
                     series = data[:, (month-1)*2:month*2, :months[month-1]*24]
                     
                     print('data_set:', data_set, ', method:', method, ', n_clusters:', n_clusters, ', month:', month, ', series shape:', series.shape)
-                    print('Start!')
 
                     total_pred_series = []
                     total_xs = []
@@ -84,4 +83,3 @@ for times in range(2, 11):
                     np.save(os.path.join(path_result, f'n_clusters_{n_clusters}_month_{month}_scale.npy'), total_scale)
 
                     del series, sub_series, train, test, total_pred_series, total_xs, total_scale
-                    print('Finish!')

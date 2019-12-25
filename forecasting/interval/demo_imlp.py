@@ -5,15 +5,15 @@ from tqdm import trange
 import time
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'
+os.environ['CUDA_DEVICE_ORDER'] = 'PCI_BUS_ID'  # cpu only
+os.environ['CUDA_VISIBLE_DEVICES'] = '-1'  # cpu only
 
 from dataloader import get_train_set, get_test_set
 from imlp import iAct, iLoss, get_model
 import tensorflow as tf
 
-gpus = tf.config.experimental.list_physical_devices(device_type='GPU')
-cpus = tf.config.experimental.list_physical_devices(device_type='CPU')
-tf.config.experimental.set_memory_growth(gpus[0], True)
-tf.config.experimental.set_virtual_device_configuration(gpus[0])
+# gpus = tf.config.experimental.list_physical_devices(device_type='GPU')
+# tf.config.experimental.set_memory_growth(gpus[0], True)
 
 months = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
 methods = ['hierarchical/euclidean', 'hierarchical/cityblock', 'hierarchical/hausdorff', 'kmeans']
@@ -42,7 +42,6 @@ for times in range(1, 11):
                     series = data[:, (month-1)*2:month*2, :months[month-1]*24]
                     
                     print('data_set:', data_set, ', method:', method, ', n_clusters:', n_clusters, ', month:', month, ', series shape:', series.shape)
-                    print('Start!')
 
                     total_pred_series = []
                     total_scale = []
@@ -84,16 +83,12 @@ for times in range(1, 11):
                         act = ['tanh']
                         beta = 0.5
 
-                        start = time.clock()
                         # Get model
                         model = get_model(input_dim, output_dim, num_units, act, beta, num_hidden_layers)
 
                         # Train
                         model.fit(x=[trainX_c, trainX_r], y=[trainY_c, trainY_r], epochs=800, verbose=0)
                         pred_c, pred_r = model.predict(x=[testX_c, testX_r])
-                        
-                        end = time.clock()
-                        print(end - start)
 
                         model.save(os.path.join(path_result, f'n_clusters_{n_clusters}_month_{month}_for_{i}.h5'))
                         pred_series = np.vstack((np.squeeze((pred_c - pred_r) / 2), np.squeeze((pred_c + pred_r) / 2)))
@@ -109,4 +104,3 @@ for times in range(1, 11):
                     np.save(os.path.join(path_result, f'n_clusters_{n_clusters}_month_{month}_scale.npy'), total_scale)
 
                     del series, sub_series, train, test, total_pred_series, total_scale
-                    print('Finish!')
