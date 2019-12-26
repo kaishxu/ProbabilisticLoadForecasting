@@ -3,6 +3,7 @@ import pandas as pd
 from iholt import Holt_model
 import os
 import gc
+from dataloader import get_data
 
 def train_model(train, test):
     # Model

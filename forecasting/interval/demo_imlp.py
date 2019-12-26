@@ -33,7 +33,7 @@ def train_model(lag, d, trainX_c, trainX_r, trainY_c, trainY_r, testX_c, testX_r
     pred_c, pred_r = model.predict(x=[testX_c, testX_r])
 
     model.save(os.path.join(path_result, f'n_clusters_{n_clusters}_month_{month}_for_{t}.h5'))
-    pred = np.vstack((np.squeeze((pred_c - pred_r) / 2), np.squeeze((pred_c + pred_r) / 2)))
+    pred = np.vstack((np.squeeze(pred_c - pred_r), np.squeeze(pred_c + pred_r)))
     return pred
 
 

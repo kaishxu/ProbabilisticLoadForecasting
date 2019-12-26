@@ -16,8 +16,8 @@ def train_model(trainX, trainY, testX):
     epsi = 0.001
     tol = 1e-10
     
-    Cs = np.arange(3.5, 4.5, 0.05)
-    pars = np.arange(16, 64, 1)
+    Cs = np.arange(1, 4.5, 0.1)
+    pars = np.arange(1, 64, 1)
     min_error = float('inf')
     best_params = np.zeros(2)
     for i in range(len(Cs)):
@@ -33,7 +33,7 @@ def train_model(trainX, trainY, testX):
             K = kernelmatrix('rbf', testX, trainX, par)
             pred = np.dot(K, Beta)
 
-            error = np.mean(np.sum((pred - testY)**2, axis=1))
+            error = np.sum((pred - testY)**2)
             if error < min_error:
                 min_error = error
                 best_beta = Beta
