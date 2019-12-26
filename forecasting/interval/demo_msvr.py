@@ -5,7 +5,7 @@ from tqdm import trange
 from sklearn.model_selection import train_test_split
 import gc
 
-from dataloader import get_train_set_, get_test_set_, get_data
+from dataloader import get_train_set_msvr, get_test_set_msvr, get_data
 from msvr import kernelmatrix
 from msvr import msvr
 
@@ -96,8 +96,8 @@ if __name__ == "__main__":
                             lag = 24
                             d = 1
                             
-                            trainX, trainY = get_train_set_(train, lag, d)
-                            testX, testY = get_test_set_(train, test, lag, d)
+                            trainX, trainY = get_train_set_msvr(train, lag, d)
+                            testX, testY = get_test_set_msvr(train, test, lag, d)
                             
                             best_beta, best_params, best_pred = train_model(trainX, trainY, testX)
                             

@@ -3,7 +3,7 @@ import pandas as pd
 import os
 from tqdm import trange
 
-def get_train_set(data, lag, d):
+def get_train_set_imlp(data, lag, d):
     l = np.maximum(d * 24, lag)
 
     total_X = []
@@ -30,7 +30,7 @@ def get_train_set(data, lag, d):
     
     return X_c, X_r, Y_c, Y_r
 
-def get_test_set(data, test, lag, d):
+def get_test_set_imlp(data, test, lag, d):
     l = np.maximum(d * 24, lag)
     
     data = np.hstack((data[:, -l:], test))
@@ -60,7 +60,7 @@ def get_test_set(data, test, lag, d):
     return X_c, X_r, Y_c, Y_r
 
 
-def get_train_set_(data, lag, d):
+def get_train_set_msvr(data, lag, d):
     l = np.maximum(d * 24, lag)
 
     total_X = []
@@ -82,7 +82,7 @@ def get_train_set_(data, lag, d):
     
     return total_X.reshape(total_X.shape[0], -1), total_Y.reshape(total_Y.shape[0], -1)
 
-def get_test_set_(data, test, lag, d):
+def get_test_set_msvr(data, test, lag, d):
     l = np.maximum(d * 24, lag)
     
     data = np.hstack((data[:, -l:], test))

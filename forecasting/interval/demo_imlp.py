@@ -8,7 +8,7 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'
 os.environ['CUDA_DEVICE_ORDER'] = 'PCI_BUS_ID'
 os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 
-from dataloader import get_train_set, get_test_set, get_data
+from dataloader import get_train_set_imlp, get_test_set_imlp, get_data
 from imlp import iAct, iLoss, get_model
 import tensorflow as tf
 
@@ -89,8 +89,8 @@ if __name__ == "__main__":
                             lag = 24
                             d = 1
                             
-                            trainX_c, trainX_r, trainY_c, trainY_r = get_train_set(train, lag, d)
-                            testX_c, testX_r, testY_c, testY_r = get_test_set(train, test, lag, d)
+                            trainX_c, trainX_r, trainY_c, trainY_r = get_train_set_imlp(train, lag, d)
+                            testX_c, testX_r, testY_c, testY_r = get_test_set_imlp(train, test, lag, d)
                             
                             pred_series = train_model(lag, d, trainX_c, trainX_r, trainY_c, trainY_r, testX_c, testX_r, path_result, n_clusters, month, i)
                             
