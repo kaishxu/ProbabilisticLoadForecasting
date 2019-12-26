@@ -1,7 +1,6 @@
 import os
 import numpy as np
 import pandas as pd
-from tqdm import trange
 import time
 import gc
 
@@ -9,7 +8,7 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'
 os.environ['CUDA_DEVICE_ORDER'] = 'PCI_BUS_ID'
 os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 
-from dataloader import get_train_set, get_test_set
+from dataloader import get_train_set, get_test_set, get_data
 from imlp import iAct, iLoss, get_model
 import tensorflow as tf
 
@@ -17,6 +16,7 @@ import tensorflow as tf
 #tf.config.experimental.set_memory_growth(gpus[0], True)
 
 def train_model(lag, d, trainX_c, trainX_r, trainY_c, trainY_r, testX_c, testX_r, path_result, n_clusters, month, t):
+    
     # Parameters
     input_dim = lag + d
     output_dim = 1
@@ -36,7 +36,9 @@ def train_model(lag, d, trainX_c, trainX_r, trainY_c, trainY_r, testX_c, testX_r
     pred = np.vstack((np.squeeze((pred_c - pred_r) / 2), np.squeeze((pred_c + pred_r) / 2)))
     return pred
 
+
 if __name__ == "__main__":
+
     months = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
     methods = ['hierarchical/euclidean', 'hierarchical/cityblock', 'hierarchical/hausdorff', 'kmeans']
     data_sets = ['Irish_2010', 'London_2013']
@@ -45,13 +47,7 @@ if __name__ == "__main__":
     for times in range(1, 11):
         for data_set in data_sets:
 
-            attr = pd.read_csv(os.path.join(path, 'data', f'{data_set}_attr_final.csv'))
-            data = []
-            for i in trange(len(attr)):
-                id = attr['ID'][i]
-                df = pd.read_csv(os.path.join(path, 'data', f'{data_set}_monthly_interval', f'{id}.csv'), header = None).values
-                data.append(df)
-            data = np.array(data)
+            data = get_data(path, data_set)
 
             for method in methods:
                 for n_clusters in range(2, 11):

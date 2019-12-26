@@ -1,4 +1,7 @@
 import numpy as np
+import pandas as pd
+import os
+from tqdm import trange
 
 def get_train_set(data, lag, d):
     l = np.maximum(d * 24, lag)
@@ -102,3 +105,14 @@ def get_test_set_(data, test, lag, d):
     total_Y = np.array(total_Y)
     
     return total_X.reshape(total_X.shape[0], -1), total_Y.reshape(total_Y.shape[0], -1)
+
+def get_data(path, data_set):
+
+    attr = pd.read_csv(os.path.join(path, 'data', f'{data_set}_attr_final.csv'))
+    data = []
+    for i in trange(len(attr)):
+        id = attr['ID'][i]
+        df = pd.read_csv(os.path.join(path, 'data', f'{data_set}_monthly_interval', f'{id}.csv'), header = None).values
+        data.append(df)
+    data = np.array(data)
+    return data
