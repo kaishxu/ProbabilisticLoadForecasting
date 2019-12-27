@@ -110,10 +110,10 @@ if __name__ == "__main__":
                             trainX, trainY = get_train_set_msvr(train, lag, d)
                             testX, testY = get_test_set_msvr(train, test, lag, d)
                             
-                            best_beta, best_params, best_pred = train_model(trainX, trainY, testX)
+                            best_params, best_beta, best_pred = train_model(trainX, trainY, testX)
                             
+                            total_params.append(best_params)                            
                             total_beta.append(best_beta)
-                            total_params.append(best_params)
                             total_pred_series.append(best_pred.T)
                             print('cluster:', i)
                             
