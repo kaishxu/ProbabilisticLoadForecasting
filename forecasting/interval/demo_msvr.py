@@ -2,46 +2,57 @@ import numpy as np
 import pandas as pd
 import os
 from tqdm import trange
-from sklearn.model_selection import train_test_split
 import gc
 
 from dataloader import get_train_set_msvr, get_test_set_msvr, get_data
 from msvr import kernelmatrix
 from msvr import msvr
 
-def train_model(trainX, trainY, testX):
+def params_search(c_start, c_end, c_step, p_start, p_end, p_step, trainX, trainY, testX):
 
     # Parameters
     ker = 'rbf'
     epsi = 0.001
     tol = 1e-10
-    
-    Cs = np.arange(1, 4.5, 0.1)
-    pars = np.arange(1, 64, 1)
     min_error = float('inf')
+
+    Cs = np.arange(c_start, c_end, c_step)
+    pars = np.arange(p_start, p_end, p_step)
     best_params = np.zeros(2)
     for i in range(len(Cs)):
         for j in range(len(pars)):
-            
+
             C = Cs[i]
             par = pars[j]
-            
+
             # Train
             Beta = msvr(trainX, trainY, ker, C, epsi, par, tol)
-            
-            # Predict with test set
-            K = kernelmatrix('rbf', testX, trainX, par)
+
+            # Predict
+            K = kernelmatrix('rbf', trainX, trainX, par)
             pred = np.dot(K, Beta)
 
-            error = np.sum((pred - testY)**2)
+            error = np.sum((pred - trainY)**2)
             if error < min_error:
                 min_error = error
-                best_beta = Beta
+                
                 best_params[0] = C
                 best_params[1] = par
-                best_pred = pred
 
-    return best_beta, best_params, best_pred
+                K = kernelmatrix('rbf', testX, trainX, par)
+                pred_test = np.dot(K, Beta)
+                
+                best_beta = Beta
+                best_pred = pred_test
+    
+    return best_params, best_beta, best_pred
+
+def train_model(trainX, trainY, testX):
+
+    best_params, best_beta, best_pred = params_search(0.1, 4.7, 0.5, 1, 64, 2, trainX, trainY, testX)
+    best_params, best_beta, best_pred = params_search(np.maximum(0.1, best_params[0]-0.5), best_params[0]+0.6, 0.1, np.maximum(1, best_params[1]-2), best_params[1]+3, 1, trainX, trainY, testX)
+
+    return best_params, best_beta, best_pred
 
 
 if __name__ == "__main__":
