@@ -84,6 +84,7 @@ if __name__ == "__main__":
                             scale = np.zeros(2)
                             scale[0] = np.max(train[0])
                             scale[1] = np.min(train[0])
+                            total_scale.append(scale)
                             train[0] = (train[0] - scale[1]) / (scale[0] - scale[1])
                             test[0] = (test[0] - scale[1]) / (scale[0] - scale[1])
                             

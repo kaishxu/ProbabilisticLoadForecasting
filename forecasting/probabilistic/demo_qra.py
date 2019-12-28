@@ -37,7 +37,8 @@ def train_model(train, test):
     pred_train = np.zeros((24, 2, l))
     pred_test = np.zeros((24, 2, 168))
     total_pred = []
-    
+
+    early_stopping = EarlyStopping(monitor='val_loss', patience=20)
     for lag in trange(1, 25):
         for d in range(1, 3):
             
@@ -51,7 +52,6 @@ def train_model(train, test):
             model = Model(inputs=inputs, outputs=x)
 
             # Train
-            early_stopping = EarlyStopping(monitor='val_loss', patience=20)
             model.compile(loss='mean_absolute_error', optimizer='adam', metrics=['accuracy'])
             hist1 = model.fit(x=np.hstack((trainX, trainTlag, trainTd)), y=trainY, validation_split=0.2, epochs=1000, verbose=0, callbacks=[early_stopping])
 
@@ -100,7 +100,7 @@ def train_model(train, test):
         error_test_step2 = qloss(testY_, pred, q)
         total_pred.append(np.squeeze(pred))
     
-    total_pred = np.array(total_pred)    
+    total_pred = np.array(total_pred)
     tf.keras.backend.clear_session()
 
     return total_pred
@@ -154,6 +154,7 @@ if __name__ == "__main__":
                             scale = np.zeros(2)
                             scale[0] = np.max(train[0])
                             scale[1] = np.min(train[0])
+                            total_scale.append(scale)
                             train[0] = (train[0] - scale[1]) / (scale[0] - scale[1])
                             test[0] = (test[0] - scale[1]) / (scale[0] - scale[1])
                             
