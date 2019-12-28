@@ -117,3 +117,85 @@ def get_test_set_qrnn(data, test, lag, d):
     total_Y = np.tile(total_Y,(99,1))
     
     return total_X, total_Y.T
+
+def get_train_set_qra(data, lag, d):
+    l = np.maximum(d * 24, lag)
+
+    total_X = []
+    total_Tlag = []
+    total_Td = []
+    total_Y = []
+    for i in range(len(data[0]) - l):
+
+        T0 = data[1, i+l]
+        tmp = np.hstack((T0, T0*T0, T0*T0*T0))
+        X = np.hstack((data[2, i+l], data[3, i+l], tmp))
+
+        Tlag = []
+        for j in range(lag):
+            Tt = data[1, -j-1+i+l]
+            tmp = np.hstack((Tt, Tt*Tt, Tt*Tt*Tt))
+            Tlag.append(tmp)
+        Tlag = np.array(Tlag).reshape(-1)
+
+        Td = []
+        for j in range(d):
+            Tt = np.mean(data[1, i+l-(j+1)*24:i+l-j*24])
+            tmp = np.hstack((Tt, Tt*Tt, Tt*Tt*Tt))
+            Td.append(tmp)
+        Td = np.array(Td).reshape(-1)
+
+        Y = data[0, i+l]
+
+        total_X.append(X)
+        total_Tlag.append(Tlag)
+        total_Td.append(Td)
+        total_Y.append(Y)
+
+    total_X = np.array(total_X)
+    total_Tlag = np.array(total_Tlag)
+    total_Td = np.array(total_Td)
+    total_Y = np.array(total_Y).reshape(-1, 1)
+    return total_X, total_Tlag/lag, total_Td/d, total_Y
+
+def get_test_set_qra(data, test, lag, d):
+    l = np.maximum(d * 24, lag)
+    
+    data = np.hstack((data[:, -l:], test))
+    
+    total_X = []
+    total_Tlag = []
+    total_Td = []
+    total_Y = []
+    for i in range(len(data[0]) - l):
+
+        T0 = data[1, i+l]
+        tmp = np.hstack((T0, T0*T0, T0*T0*T0))
+        X = np.hstack((data[2, i+l], data[3, i+l], tmp))
+
+        Tlag = []
+        for j in range(lag):
+            Tt = data[1, -j-1+i+l]
+            tmp = np.hstack((Tt, Tt*Tt, Tt*Tt*Tt))
+            Tlag.append(tmp)
+        Tlag = np.array(Tlag).reshape(-1)
+
+        Td = []
+        for j in range(d):
+            Tt = np.mean(data[1, i+l-(j+1)*24:i+l-j*24])
+            tmp = np.hstack((Tt, Tt*Tt, Tt*Tt*Tt))
+            Td.append(tmp)
+        Td = np.array(Td).reshape(-1)
+
+        Y = data[0, i+l]
+
+        total_X.append(X)
+        total_Tlag.append(Tlag)
+        total_Td.append(Td)
+        total_Y.append(Y)
+
+    total_X = np.array(total_X)
+    total_Tlag = np.array(total_Tlag)
+    total_Td = np.array(total_Td)
+    total_Y = np.array(total_Y).reshape(-1, 1)
+    return total_X, total_Tlag/lag, total_Td/d, total_Y
