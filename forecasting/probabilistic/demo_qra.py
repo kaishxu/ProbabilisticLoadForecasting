@@ -47,7 +47,7 @@ def train_model(train, test):
             ## QRA step 1
             # linear model
             inputs = Input((5 + lag*3 + d*3,), name='input')
-            x = Dense(1, activation=None, use_bias=True, kernel_initializer='he_normal', bias_initializer='he_normal')(inputs)
+            x = Dense(1, use_bias=True, kernel_initializer='he_normal', bias_initializer='he_normal')(inputs)
             model = Model(inputs=inputs, outputs=x)
 
             # Train
@@ -86,7 +86,7 @@ def train_model(train, test):
     for q in trange(1, 100):
         
         input_dim = num_best
-        model = Sequential([Dense(1, input_shape=(input_dim,))])
+        model = Sequential([Dense(1, use_bias=True, kernel_initializer='he_normal', bias_initializer='he_normal', input_shape=(input_dim,))])
 
         # Train
         model.compile(loss=lambda y_true, y_pred: qloss(y_true, y_pred, q), optimizer='adam')
