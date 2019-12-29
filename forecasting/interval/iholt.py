@@ -13,10 +13,10 @@ class Holt_model(object):
     def fun(self, x):
         a = x[:4].reshape((2, 2))
         b = x[4:].reshape((2, 2))
-        s = self.s
+        s = self.s.copy()
         
         # initialize
-        Lt_1 = s[:, 1:2]
+        Lt_1 = s[:, 1:2].copy()
         Tt_1 = s[:, 1:2] - s[:, 0:1]
         
         e = np.sum((s[:, 2:3] - Lt_1 - Tt_1) ** 2)
@@ -24,15 +24,15 @@ class Holt_model(object):
             Lt = get_Lt(a, s[:, i+2:i+3], Lt_1, Tt_1)
             Tt = get_Tt(b, Lt, Lt_1, Tt_1)
             e = e + np.sum((s[:, i+3:i+4] - Lt - Tt) ** 2)
-            Lt_1 = Lt
-            Tt_1 = Tt
+            Lt_1 = Lt.copy()
+            Tt_1 = Tt.copy()
         return e
     def pred(self, x, len_pred, test_sample=None):
         a = x[:4].reshape((2, 2))
         b = x[4:].reshape((2, 2))
         
-        s = self.s
-        Lt_1 = s[:, 1:2]
+        s = self.s.copy()
+        Lt_1 = s[:, 1:2].copy()
         Tt_1 = s[:, 1:2] - s[:, 0:1]
         
         list_It = []
@@ -46,8 +46,8 @@ class Holt_model(object):
             list_Lt.append(Lt)
             list_Tt.append(Tt)
             list_It.append(Lt + Tt)
-            Lt_1 = Lt
-            Tt_1 = Tt
+            Lt_1 = Lt.copy()
+            Tt_1 = Tt.copy()
         
         # predict (out of sample)
         if test_sample is not None:
@@ -57,8 +57,8 @@ class Holt_model(object):
                 list_Lt.append(Lt)
                 list_Tt.append(Tt)
                 list_It.append(Lt + Tt)
-                Lt_1 = Lt
-                Tt_1 = Tt
+                Lt_1 = Lt.copy()
+                Tt_1 = Tt.copy()
         else:
             for i in range(len_pred - 1):
                 Lt = get_Lt(a, Lt_1 + Tt_1, Lt_1, Tt_1)
@@ -66,8 +66,8 @@ class Holt_model(object):
                 list_Lt.append(Lt)
                 list_Tt.append(Tt)
                 list_It.append(Lt + Tt)
-                Lt_1 = Lt
-                Tt_1 = Tt
+                Lt_1 = Lt.copy()
+                Tt_1 = Tt.copy()
         return list_It, list_Lt, list_Tt
     def train(self, x0, bnds, mtd='L-BFGS-B'):
         result = minimize(self.fun, x0, method=mtd, bounds=bnds)

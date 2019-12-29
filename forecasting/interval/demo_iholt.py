@@ -18,6 +18,7 @@ def train_model(train, test):
     # predict
     It, Lt, Tt = holt_model.pred(result.x, 168, test)
 
+    del holt_model
     return result, It
 
 if __name__ == "__main__":
@@ -68,7 +69,7 @@ if __name__ == "__main__":
 
                             total_pred_series.append(np.squeeze(np.array(It)).T[:, -168:])
                             total_xs.append(result.x)
-                            print('cluster:', i, 'train status:', result.success)
+                            print('cluster:', i, ', train status:', result.success)
                             del result, It
                             gc.collect()
 
