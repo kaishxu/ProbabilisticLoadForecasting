@@ -36,9 +36,8 @@ def train_model(train, test):
     error_train_step1 = np.zeros((24, 2))
     pred_train = np.zeros((24, 2, l))
     pred_test = np.zeros((24, 2, 168))
-    total_pred = []
 
-    early_stopping = EarlyStopping(monitor='val_loss', patience=20)
+    early_stopping = EarlyStopping(monitor='val_loss', patience=10)
     for lag in trange(1, 25):
         for d in range(1, 3):
             
@@ -78,11 +77,13 @@ def train_model(train, test):
     testY_ = testY
     
     # clear
-    tf.keras.backend.clear_session()
+    del model, pred, hist1
     
     ## QRA step 2
     # qr model
-    for q in range(1, 100):
+    total_pred = []
+    early_stopping = EarlyStopping(monitor='val_loss', patience=10)
+    for q in trange(1, 100):
         
         input_dim = num_best
         model = Sequential([Dense(1, input_shape=(input_dim,))])
@@ -101,16 +102,20 @@ def train_model(train, test):
         total_pred.append(np.squeeze(pred))
     
     total_pred = np.array(total_pred)
+    
+    del model, pred, hist2
     tf.keras.backend.clear_session()
-
+    gc.collect()
     return total_pred
 
 
 if __name__ == "__main__":
 
     months = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
-    methods = ['hierarchical/euclidean', 'hierarchical/cityblock', 'hierarchical/DTW', 'kmeans']
-    data_sets = ['Irish_2010', 'London_2013']
+    #methods = ['hierarchical/euclidean', 'hierarchical/cityblock', 'hierarchical/DTW', 'kmeans']
+    methods = ['hierarchical/DTW']
+    #data_sets = ['Irish_2010', 'London_2013']
+    data_sets = ['Irish_2010']
 
     path = os.path.abspath(os.path.join(os.getcwd()))
     for times in range(1, 11):
@@ -163,7 +168,6 @@ if __name__ == "__main__":
                             total_pred_series.append(pred_series)
                             print('cluster:', i)
                             
-                            tf.keras.backend.clear_session()
                             del sub_series, train, test
                             gc.collect()
 
