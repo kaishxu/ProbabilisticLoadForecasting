@@ -96,7 +96,7 @@ def get_data(path, data_set):
     data = []
     for i in trange(len(attr)):
         id = attr['ID'][i]
-        df = pd.read_csv(os.path.join(path, 'data', f'{data_set}_monthly_interval', f'{id}.csv'), header = None).values
+        df = pd.read_csv(os.path.join(path, 'data', f'{data_set}_monthly', f'{id}.csv'), header = None).values
         data.append(df)
     data = np.array(data)
     return data

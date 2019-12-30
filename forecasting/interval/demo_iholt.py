@@ -23,8 +23,10 @@ def train_model(train, test):
 
 if __name__ == "__main__":
     months = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
-    methods = ['hierarchical/euclidean', 'hierarchical/cityblock', 'hierarchical/hausdorff', 'kmeans']
-    data_sets = ['Irish_2010', 'London_2013']
+    # methods = ['hierarchical/euclidean', 'hierarchical/cityblock', 'hierarchical/hausdorff', 'kmeans']
+    methods = ['hierarchical/hausdorff']    
+    # data_sets = ['Irish_2010', 'London_2013']
+    data_sets = ['London_2013']
 
     path = os.path.abspath(os.path.join(os.getcwd()))
 
