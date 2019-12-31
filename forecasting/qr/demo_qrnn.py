@@ -35,6 +35,9 @@ def train_model(lag, d, trainX, trainY, testX, path_result, n_clusters, month, t
 
     model.save(os.path.join(path_result, f'n_clusters_{n_clusters}_month_{month}_for_{t}.h5'))
 
+    del model
+    tf.keras.backend.clear_session()
+    gc.collect()
     return pred
 
 
@@ -105,7 +108,6 @@ if __name__ == "__main__":
                             total_pred_series.append(pred_series)
                             print('cluster:', i, ', time:', t2-t1)
                             
-                            tf.keras.backend.clear_session()
                             del sub_series, train, test, trainX, trainY, testX, testY
                             gc.collect()
 

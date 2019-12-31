@@ -10,7 +10,7 @@ def qloss(y_true, y_pred):
     tmp2 = q / 100 * (y_true - y_pred)
     return K.mean(K.maximum(tmp1, tmp2))
 
-def get_model(input_dim, num_units, act, num_hidden_layers=1):
+def get_model(input_dim, num_units, act, gauss_std=0.3, num_hidden_layers=1):
     input_ = Input((input_dim,), name='input')
     
     x = input_
