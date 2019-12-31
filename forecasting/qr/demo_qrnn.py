@@ -18,8 +18,8 @@ import tensorflow as tf
 def train_model(lag, d, trainX, trainY, testX, path_result, n_clusters, month, t):
     
     # Parameters
-    input_dim = (lag + d) * 2 + 3
-    num_hidden_layers = 1
+    input_dim = (lag + d) * 2 + 1 + 7 + 24
+    num_hidden_layers = 2
     num_unit = 10
     num_units = [num_unit, num_unit]
     act = ['relu', 'relu']
@@ -43,6 +43,7 @@ if __name__ == "__main__":
     data_sets = ['Irish_2010', 'London_2013']
 
     path = os.path.abspath(os.path.join(os.getcwd()))
+    
     for times in range(1, 11):
         for data_set in data_sets:
 
@@ -76,7 +77,7 @@ if __name__ == "__main__":
                             sub_series = series[index]
                             sub_series = np.sum(sub_series, axis=0)
                             
-                            total_series = np.vstack((sub_series, weather, week, day))
+                            total_series = np.vstack((sub_series, weather))
                             
                             test = total_series[:, -168:]
                             train = total_series[:, :-168]
@@ -92,8 +93,8 @@ if __name__ == "__main__":
                             lag = 24
                             d = 1
                             
-                            trainX, trainY = get_train_set_qrnn(train, lag, d)
-                            testX, testY = get_test_set_qrnn(train, test, lag, d)
+                            trainX, trainY = get_train_set_qrnn(train, week, day, lag, d)
+                            testX, testY = get_test_set_qrnn(train, test, week, day, lag, d)
                             
                             pred_series = train_model(lag, d, trainX, trainY, testX, path_result, n_clusters, month, i)
                             

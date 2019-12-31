@@ -39,10 +39,12 @@ def train(model: nn.Module,
     '''
     model.train()
     loss_epoch = np.zeros(len(train_loader))
+
     # Train_loader:
     # train_batch ([batch_size, train_window, 1+cov_dim]): z_{0:T-1} + x_{1:T}, note that z_0 = 0;
     # idx ([batch_size]): one integer denoting the time series id;
     # labels_batch ([batch_size, train_window]): z_{1:T}.
+    
     for i, (train_batch, idx, labels_batch) in enumerate(train_loader):
         optimizer.zero_grad()
         batch_size = train_batch.shape[0]
@@ -71,8 +73,7 @@ def train(model: nn.Module,
             # test_metrics = evaluate(model, loss_fn, test_loader, params, epoch, sample=params.sampling)
             # model.train()
             print(f'train_loss: {loss}')
-        # if i == 0:
-        #     print(f'train_loss: {loss}')
+
     return loss_epoch
 
 
@@ -105,6 +106,7 @@ def train_and_evaluate(model: nn.Module,
         # train
         loss_summary[epoch * train_len:(epoch + 1) * train_len] = train(model, optimizer, loss_fn, train_loader,
                                                                         test_loader, params, epoch)
+        
         # evaluate
         test_metrics = evaluate(model, loss_fn, test_loader, params, epoch, sample=params.sampling)
         
@@ -122,7 +124,5 @@ def train_and_evaluate(model: nn.Module,
         # save best metrics for each epoch
         if is_best:
             best_test_ND = ND_summary[epoch]
-            # best_json_path = os.path.join(params.model_dir, 'metrics_test_best_weights.json')
-            # utils.save_dict_to_json(test_metrics, best_json_path)
 
         print('Current Best ND is: %.5f' % best_test_ND)

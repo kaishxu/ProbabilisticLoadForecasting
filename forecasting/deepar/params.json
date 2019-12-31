@@ -7,7 +7,7 @@
     "predict_start": 168,
     "test_predict_start": 168,
     "predict_steps": 24,
-    "num_class": 665,
+    "num_class": 0,
     "cov_dim": 4,
     "embedding_dim": 20,
     "sample_times": 200,

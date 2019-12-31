@@ -4,6 +4,7 @@ import os
 from tqdm import trange
 import re
 from datetime import datetime
+from sklearn.preprocessing import OneHotEncoder
 
 months = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
 
@@ -16,7 +17,10 @@ def get_dow(data_set, month):
         week_value = datetime.strptime(year + '%02d%02d' %(month, i+1), '%Y%m%d').weekday()
         for _ in range(24):
             week.append(week_value)
-    week = np.array(week) / 6   # normalization
+
+    week = np.array(week)
+    onehot_encoder = OneHotEncoder(sparse=False, categories='auto')
+    week = onehot_encoder.fit_transform(week.reshape(-1, 1))
     return week
 
 # calendar series (hour of day)
@@ -26,7 +30,10 @@ def get_hod(month):
     for i in range(months[month-1]):
         for _ in range(24):
             day.append(_)
-    day = np.array(day) / 23   # normalization
+
+    day = np.array(day)
+    onehot_encoder = OneHotEncoder(sparse=False, categories='auto')
+    day = onehot_encoder.fit_transform(day.reshape(-1, 1))
     return day
 
 # weather series
@@ -56,7 +63,7 @@ def get_data(path, data_set):
     data = np.array(data)
     return data
 
-def get_train_set_qrnn(data, lag, d):
+def get_train_set_qrnn(data, week, day, lag, d):
     l = np.maximum(d * 24, lag)
 
     total_X = []
@@ -75,7 +82,7 @@ def get_train_set_qrnn(data, lag, d):
         for j in range(d):
             temp[lag+j+1] = np.mean(data[1, i+l-(j+1)*24:i+l-j*24])
 
-        X = np.hstack((elect, temp, data[2, i+l], data[3, i+l]))
+        X = np.hstack((elect, temp, week[i+l, :], day[i+l, :]))
         Y = data[0, i+l]
         total_X.append(X)
         total_Y.append(Y)
@@ -86,11 +93,13 @@ def get_train_set_qrnn(data, lag, d):
     
     return total_X, total_Y.T
 
-def get_test_set_qrnn(data, test, lag, d):
+def get_test_set_qrnn(data, test, week, day, lag, d):
     l = np.maximum(d * 24, lag)
     
     data = np.hstack((data[:, -l:], test))
-    
+    week = week[-l-168:, :].copy()
+    day = day[-l-168:, :].copy()
+
     total_X = []
     total_Y = []
     for i in range(len(data[0]) - l):
@@ -107,7 +116,7 @@ def get_test_set_qrnn(data, test, lag, d):
         for j in range(d):
             temp[lag+j+1] = np.mean(data[1, i+l-(j+1)*24:i+l-j*24])
 
-        X = np.hstack((elect, temp, data[2, i+l], data[3, i+l]))
+        X = np.hstack((elect, temp, week[i+l, :], day[i+l, :]))
         Y = data[0, i+l]
         total_X.append(X)
         total_Y.append(Y)
@@ -118,7 +127,7 @@ def get_test_set_qrnn(data, test, lag, d):
     
     return total_X, total_Y.T
 
-def get_train_set_qra(data, lag, d):
+def get_train_set_qra(data, week, day, lag, d):
     l = np.maximum(d * 24, lag)
 
     total_X = []
@@ -129,7 +138,7 @@ def get_train_set_qra(data, lag, d):
 
         T0 = data[1, i+l]
         tmp = np.hstack((T0, T0*T0, T0*T0*T0))
-        X = np.hstack((data[2, i+l], data[3, i+l], tmp))
+        X = np.hstack((week[i+l, :], day[i+l, :], tmp))
 
         Tlag = []
         for j in range(lag):
@@ -158,11 +167,13 @@ def get_train_set_qra(data, lag, d):
     total_Y = np.array(total_Y).reshape(-1, 1)
     return total_X, total_Tlag/lag, total_Td/d, total_Y
 
-def get_test_set_qra(data, test, lag, d):
+def get_test_set_qra(data, test, week, day, lag, d):
     l = np.maximum(d * 24, lag)
     
     data = np.hstack((data[:, -l:], test))
-    
+    week = week[-l-168:, :].copy()
+    day = day[-l-168:, :].copy()
+
     total_X = []
     total_Tlag = []
     total_Td = []
@@ -171,7 +182,7 @@ def get_test_set_qra(data, test, lag, d):
 
         T0 = data[1, i+l]
         tmp = np.hstack((T0, T0*T0, T0*T0*T0))
-        X = np.hstack((data[2, i+l], data[3, i+l], tmp))
+        X = np.hstack((week[i+l, :], day[i+l, :], tmp))
 
         Tlag = []
         for j in range(lag):

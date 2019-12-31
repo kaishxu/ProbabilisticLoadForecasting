@@ -14,8 +14,6 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'
 os.environ['CUDA_DEVICE_ORDER'] = 'PCI_BUS_ID'
 os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 
-from dataloader import get_data, get_train_set_qra, get_test_set_qra, get_weather, get_hod, get_dow
-
 #gpus = tf.config.experimental.list_physical_devices(device_type='GPU')
 #tf.config.experimental.set_memory_growth(gpus[0], True)
 
@@ -24,10 +22,11 @@ def qloss(y_true, y_pred, q):
     tmp2 = q / 100 * (y_true - y_pred)
     return K.mean(K.maximum(tmp1, tmp2))
 
-def train_model(trainX_, trainY_, testX_, num_best):
+def train_model_2(trainX_, trainY_, testX_, num_best):
     
     total_pred = []
     early_stopping = EarlyStopping(monitor='val_loss', patience=10)
+    
     for q in trange(1, 100):
         
         input_dim = num_best
@@ -58,13 +57,12 @@ if __name__ == "__main__":
     data_sets = ['Irish_2010']
 
     path = os.path.abspath(os.path.join(os.getcwd()))
-    path = path.replace('\\', '/')
 
     for times in range(1, 11):
         for data_set in data_sets:
 
             data = get_data(path, data_set)
-            print(data.shape)
+
             for method in methods:
                 for n_clusters in range(2, 11):
                     for month in range(1, 13):
@@ -84,7 +82,7 @@ if __name__ == "__main__":
                         num_best = 8
                         for i in range(n_clusters):
 
-                            pred_series = train_model(trainX_[i], trainY_[i], testX_[i], num_best)
+                            pred_series = train_model_2(trainX_[i], trainY_[i], testX_[i], num_best)
                             
                             total_pred_series.append(pred_series)
                             print('cluster:', i)

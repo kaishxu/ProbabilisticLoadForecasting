@@ -14,8 +14,6 @@ import matplotlib.pyplot as plt
 
 import model.net as net
 
-logger = logging.getLogger('DeepAR.Utils')
-
 
 class Params:
     '''

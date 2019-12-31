@@ -24,20 +24,21 @@ def qloss(y_true, y_pred, q):
     tmp2 = q / 100 * (y_true - y_pred)
     return K.mean(K.maximum(tmp1, tmp2))
 
-def train_model(train, test):
+def train_model_1(train, test, week, day):
     
-    # to get the length of samples
+    # to get the num of samples
     max_lag = 24
     max_d = 2
-    trainX, trainTlag, trainTd, trainY = get_train_set_qra(train, max_lag, max_d)
-    l = trainY.shape[0]
+    trainX, trainTlag, trainTd, trainY = get_train_set_qra(train, week, day, max_lag, max_d)
+    n_samples = trainY.shape[0]
     
     num_best = 8
     error_train_step1 = np.zeros((24, 2))
-    pred_train = np.zeros((24, 2, l))
+    pred_train = np.zeros((24, 2, n_samples))
     pred_test = np.zeros((24, 2, 168))
 
     early_stopping = EarlyStopping(monitor='val_loss', patience=10)
+    
     for lag in trange(1, 25):
         for d in range(1, 3):
             
@@ -46,7 +47,7 @@ def train_model(train, test):
 
             ## QRA step 1
             # linear model
-            inputs = Input((5 + lag*3 + d*3,), name='input')
+            inputs = Input((7 + 24 + lag*3 + d*3,), name='input')
             x = Dense(1, use_bias=True, kernel_initializer='he_normal', bias_initializer='he_normal')(inputs)
             model = Model(inputs=inputs, outputs=x)
 
@@ -55,8 +56,8 @@ def train_model(train, test):
             hist1 = model.fit(x=np.hstack((trainX, trainTlag, trainTd)), y=trainY, validation_split=0.2, epochs=1000, verbose=0, callbacks=[early_stopping])
 
             # Predict (train)
-            pred = model.predict(x=np.hstack((trainX, trainTlag, trainTd))[-l:, :])
-            error_train_step1[lag-1, d-1] = np.sum(np.abs(pred - trainY[-l:, :]))
+            pred = model.predict(x=np.hstack((trainX, trainTlag, trainTd))[-n_samples:, :])
+            error_train_step1[lag-1, d-1] = np.sum(np.abs(pred - trainY[-n_samples:, :]))
             pred_train[lag-1, d-1] = np.squeeze(pred)
             
             # Predict (test)
@@ -68,7 +69,7 @@ def train_model(train, test):
     series_train_2 = pred_train[np.argsort(error_train_step1[:,1])[:num_best//2], 1]
 
     trainX_ = np.vstack((series_train_1, series_train_2)).T
-    trainY_ = trainY[-l:, :]
+    trainY_ = trainY[-n_samples:, :].copy()
     
     series_test_1 = pred_test[np.argsort(error_train_step1[:,0])[:num_best//2], 0]
     series_test_2 = pred_test[np.argsort(error_train_step1[:,1])[:num_best//2], 1]
@@ -121,7 +122,7 @@ if __name__ == "__main__":
 
                         total_scale = []
 
-                        path_result = os.path.join(path, 'result', data_set, 'forecasting', 'qra', f'times_{times}', method)
+                        path_result = os.path.join(path, 'result', data_set, 'forecasting', 'qra', 'step_1', f'times_{times}', method)
                         if not os.path.exists(path_result):
                             os.makedirs(path_result)
 
@@ -131,7 +132,7 @@ if __name__ == "__main__":
                             sub_series = series[index]
                             sub_series = np.sum(sub_series, axis=0)
                             
-                            total_series = np.vstack((sub_series, weather, week, day))
+                            total_series = np.vstack((sub_series, weather))
                             
                             test = total_series[:, -168:]
                             train = total_series[:, :-168]
@@ -143,7 +144,7 @@ if __name__ == "__main__":
                             train[0] = (train[0] - scale[1]) / (scale[0] - scale[1])
                             test[0] = (test[0] - scale[1]) / (scale[0] - scale[1])
                             
-                            pred_trainX_, pred_trainY_, pred_testX_, pred_testY_ = train_model(train, test)
+                            pred_trainX_, pred_trainY_, pred_testX_, pred_testY_ = train_model_1(train, test, week, day)
                             
                             total_pred_trainX_.append(pred_trainX_)
                             total_pred_trainY_.append(pred_trainY_)
