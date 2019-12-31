@@ -3,6 +3,7 @@ import pandas as pd
 import os
 from keras.callbacks import EarlyStopping
 import gc
+import time
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'
 os.environ['CUDA_DEVICE_ORDER'] = 'PCI_BUS_ID'
@@ -20,15 +21,16 @@ def train_model(lag, d, trainX, trainY, testX, path_result, n_clusters, month, t
     # Parameters
     input_dim = (lag + d) * 2 + 1 + 7 + 24
     num_hidden_layers = 2
-    num_unit = 10
+    num_unit = 20
     num_units = [num_unit, num_unit]
     act = ['relu', 'relu']
+    early_stopping = EarlyStopping(monitor='val_loss', patience=50)
 
     # Get model
     model = get_model(input_dim, num_units, act, num_hidden_layers)
 
     # Train
-    hist = model.fit(x=trainX, y=trainY, epochs=300, verbose=0)
+    hist = model.fit(x=trainX, y=trainY, validation_split=0.2, epochs=1500, verbose=0, callbacks=[early_stopping])
     pred = model.predict(x=testX)
 
     model.save(os.path.join(path_result, f'n_clusters_{n_clusters}_month_{month}_for_{t}.h5'))
@@ -96,10 +98,12 @@ if __name__ == "__main__":
                             trainX, trainY = get_train_set_qrnn(train, week, day, lag, d)
                             testX, testY = get_test_set_qrnn(train, test, week, day, lag, d)
                             
+                            t1 = time.process_time()
                             pred_series = train_model(lag, d, trainX, trainY, testX, path_result, n_clusters, month, i)
+                            t2 = time.process_time()
                             
                             total_pred_series.append(pred_series)
-                            print('cluster:', i)
+                            print('cluster:', i, ', time:', t2-t1)
                             
                             tf.keras.backend.clear_session()
                             del sub_series, train, test, trainX, trainY, testX, testY
