@@ -19,12 +19,7 @@ from dataloader import get_data, get_train_set_qra, get_test_set_qra, get_weathe
 #gpus = tf.config.experimental.list_physical_devices(device_type='GPU')
 #tf.config.experimental.set_memory_growth(gpus[0], True)
 
-def qloss(y_true, y_pred, q):
-    tmp1 = (q / 100 - 1) * (y_true - y_pred)
-    tmp2 = q / 100 * (y_true - y_pred)
-    return K.mean(K.maximum(tmp1, tmp2))
-
-def train_model_1(train, test, week, day):
+def train_model_1(train, test, week, day, num_best=8):
     
     # to get the num of samples
     max_lag = 24
@@ -32,7 +27,6 @@ def train_model_1(train, test, week, day):
     trainX, trainTlag, trainTd, trainY = get_train_set_qra(train, week, day, max_lag, max_d)
     n_samples = trainY.shape[0]
     
-    num_best = 8
     error_train_step1 = np.zeros((24, 2))
     pred_train = np.zeros((24, 2, n_samples))
     pred_test = np.zeros((24, 2, 168))
@@ -126,6 +120,8 @@ if __name__ == "__main__":
                         if not os.path.exists(path_result):
                             os.makedirs(path_result)
 
+                        num_best = 8
+
                         for i in range(n_clusters):
 
                             index = list(clusters[month-1] == i)
@@ -144,7 +140,7 @@ if __name__ == "__main__":
                             train[0] = (train[0] - scale[1]) / (scale[0] - scale[1])
                             test[0] = (test[0] - scale[1]) / (scale[0] - scale[1])
                             
-                            pred_trainX_, pred_trainY_, pred_testX_, pred_testY_ = train_model_1(train, test, week, day)
+                            pred_trainX_, pred_trainY_, pred_testX_, pred_testY_ = train_model_1(train, test, week, day, num_best)
                             
                             total_pred_trainX_.append(pred_trainX_)
                             total_pred_trainY_.append(pred_trainY_)

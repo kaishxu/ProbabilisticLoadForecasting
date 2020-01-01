@@ -78,8 +78,9 @@ if __name__ == "__main__":
                         trainY_ = np.load(os.path.join(path_result1, f'n_clusters_{n_clusters}_month_{month}_trainY.npy'))
                         testX_ = np.load(os.path.join(path_result1, f'n_clusters_{n_clusters}_month_{month}_testX.npy'))
 
-                        total_pred_series = []
                         num_best = 8
+
+                        total_pred_series = []
                         for i in range(n_clusters):
 
                             pred_series = train_model_2(trainX_[i], trainY_[i], testX_[i], num_best)
