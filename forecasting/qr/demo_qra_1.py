@@ -19,7 +19,7 @@ from dataloader import get_data, get_train_set_qra, get_test_set_qra, get_weathe
 #gpus = tf.config.experimental.list_physical_devices(device_type='GPU')
 #tf.config.experimental.set_memory_growth(gpus[0], True)
 
-def train_model_1(train, test, week, day, num_best=8):
+def train_model_1(train, test, week, day):
     
     # to get the num of samples
     max_lag = 24
@@ -27,13 +27,12 @@ def train_model_1(train, test, week, day, num_best=8):
     trainX, trainTlag, trainTd, trainY = get_train_set_qra(train, week, day, max_lag, max_d)
     n_samples = trainY.shape[0]
     
-    error_train_step1 = np.zeros((13, 2))
-    pred_train = np.zeros((13, 2, n_samples))
-    pred_test = np.zeros((13, 2, 168))
+    pred_train = np.zeros((24, 2, n_samples))
+    pred_test = np.zeros((24, 2, 168))
 
     early_stopping = EarlyStopping(monitor='val_loss', patience=50)
     
-    for lag in trange(12, 25):
+    for lag in trange(1, 25):
         for d in range(1, 3):
             
             trainX, trainTlag, trainTd, trainY = get_train_set_qra(train, week, day, lag, d)
@@ -47,48 +46,34 @@ def train_model_1(train, test, week, day, num_best=8):
 
             # Train
             model.compile(loss='mean_absolute_error', optimizer='adam', metrics=['accuracy'])
-            hist1 = model.fit(x=np.hstack((trainX, trainTlag, trainTd)), y=trainY, validation_split=0.2, epochs=1000, verbose=0, callbacks=[early_stopping])
+            hist1 = model.fit(x=np.hstack((trainX, trainTlag, trainTd)), y=trainY, validation_split=0.2, epochs=1500, verbose=0, callbacks=[early_stopping])
 
             # Predict (train)
             pred = model.predict(x=np.hstack((trainX, trainTlag, trainTd)))
-            error_train_step1[lag-12, d-1] = np.sum(np.abs(pred[-n_samples:, :] - trainY[-n_samples:, :]))
-            pred_train[lag-12, d-1] = np.squeeze(pred[-n_samples:, :])
+            pred_train[lag-1, d-1] = np.squeeze(pred[-n_samples:, :])
             
             # Predict (test)
             pred = model.predict(x=np.hstack((testX, testTlag, testTd)))
-            pred_test[lag-12, d-1] = np.squeeze(pred)
-    
-    # prepare for step 2
-    series_train_1 = pred_train[np.argsort(error_train_step1[:,0])[:num_best//2], 0]
-    series_train_2 = pred_train[np.argsort(error_train_step1[:,1])[:num_best//2], 1]
-
-    trainX_ = np.vstack((series_train_1, series_train_2)).T
-    trainY_ = trainY[-n_samples:, :].copy()
-    
-    series_test_1 = pred_test[np.argsort(error_train_step1[:,0])[:num_best//2], 0]
-    series_test_2 = pred_test[np.argsort(error_train_step1[:,1])[:num_best//2], 1]
-    
-    testX_ = np.vstack((series_test_1, series_test_2)).T
-    testY_ = testY
+            pred_test[lag-1, d-1] = np.squeeze(pred)
     
     # clear
     del model, pred, hist1
     tf.keras.backend.clear_session()
     gc.collect()
-    return trainX_, trainY_, testX_, testY_
+    return pred_train, pred_test, trainY[-n_samples:, :], testY
 
 
 if __name__ == "__main__":
 
     months = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
     #methods = ['hierarchical/euclidean', 'hierarchical/cityblock', 'hierarchical/DTW', 'kmeans']
-    methods = ['hierarchical/euclidean']
+    methods = ['kmeans']
     #data_sets = ['Irish_2010', 'London_2013']
-    data_sets = ['Irish_2010']
+    data_sets = ['London_2013']
 
     path = os.path.abspath(os.path.join(os.getcwd()))
 
-    for times in range(1, 11):
+    for times in range(1, 2):
         for data_set in data_sets:
 
             data = get_data(path, data_set)
@@ -108,18 +93,16 @@ if __name__ == "__main__":
                         
                         print('times:', times, ', data_set:', data_set, ', method:', method, ', n_clusters:', n_clusters, ', month:', month, ', series shape:', series.shape)
 
-                        total_pred_trainX_ = []
-                        total_pred_trainY_ = []
-                        total_pred_testX_ = []
-                        total_pred_testY_ = []
+                        total_trainX_ = []
+                        total_trainY_ = []
+                        total_testX_ = []
+                        total_testY_ = []
 
                         total_scale = []
 
                         path_result = os.path.join(path, 'result', data_set, 'forecasting', 'qra', 'step_1', f'times_{times}', method)
                         if not os.path.exists(path_result):
                             os.makedirs(path_result)
-
-                        num_best = 8
 
                         for i in range(n_clusters):
 
@@ -140,27 +123,27 @@ if __name__ == "__main__":
                             train[0] = (train[0] - scale[1]) / (scale[0] - scale[1])
                             test[0] = (test[0] - scale[1]) / (scale[0] - scale[1])
                             
-                            pred_trainX_, pred_trainY_, pred_testX_, pred_testY_ = train_model_1(train, test, week, day, num_best)
+                            trainX_, testX_, trainY_, testY_ = train_model_1(train, test, week, day)
                             
-                            total_pred_trainX_.append(pred_trainX_)
-                            total_pred_trainY_.append(pred_trainY_)
-                            total_pred_testX_.append(pred_testX_)
-                            total_pred_testY_.append(pred_testY_)
+                            total_trainX_.append(trainX_)
+                            total_trainY_.append(trainY_)
+                            total_testX_.append(testX_)
+                            total_testY_.append(testY_)
                             print('cluster:', i)
                             
                             del sub_series, train, test
                             gc.collect()
 
-                        total_pred_trainX_ = np.array(total_pred_trainX_)
-                        total_pred_trainY_ = np.array(total_pred_trainY_)
-                        total_pred_testX_ = np.array(total_pred_testX_)
-                        total_pred_testY_ = np.array(total_pred_testY_)
+                        total_trainX_ = np.array(total_trainX_)
+                        total_trainY_ = np.array(total_trainY_)
+                        total_testX_ = np.array(total_testX_)
+                        total_testY_ = np.array(total_testY_)
                         total_scale = np.array(total_scale)
 
-                        np.save(os.path.join(path_result, f'n_clusters_{n_clusters}_month_{month}_trainX.npy'), total_pred_trainX_)
-                        np.save(os.path.join(path_result, f'n_clusters_{n_clusters}_month_{month}_trainY.npy'), total_pred_trainY_)
-                        np.save(os.path.join(path_result, f'n_clusters_{n_clusters}_month_{month}_testX.npy'), total_pred_testX_)
-                        np.save(os.path.join(path_result, f'n_clusters_{n_clusters}_month_{month}_testY.npy'), total_pred_testY_)
+                        np.save(os.path.join(path_result, f'n_clusters_{n_clusters}_month_{month}_trainX.npy'), total_trainX_)
+                        np.save(os.path.join(path_result, f'n_clusters_{n_clusters}_month_{month}_trainY.npy'), total_trainY_)
+                        np.save(os.path.join(path_result, f'n_clusters_{n_clusters}_month_{month}_testX.npy'), total_testX_)
+                        np.save(os.path.join(path_result, f'n_clusters_{n_clusters}_month_{month}_testY.npy'), total_testY_)
                         np.save(os.path.join(path_result, f'n_clusters_{n_clusters}_month_{month}_scale.npy'), total_scale)
 
-                        del series, total_scale, total_pred_trainX_, total_pred_trainY_, total_pred_testX_, total_pred_testY_
+                        del series, total_scale, total_trainX_, total_trainY_, total_testX_, total_testY_
