@@ -101,12 +101,10 @@ if __name__ == "__main__":
                             trainX, trainY = get_train_set_qrnn(train, week, day, lag, d)
                             testX, testY = get_test_set_qrnn(train, test, week, day, lag, d)
                             
-                            t1 = time.process_time()
                             pred_series = train_model(lag, d, trainX, trainY, testX, path_result, n_clusters, month, i)
-                            t2 = time.process_time()
                             
                             total_pred_series.append(pred_series)
-                            print('cluster:', i, ', time:', t2-t1)
+                            print('cluster:', i)
                             
                             del sub_series, train, test, trainX, trainY, testX, testY
                             gc.collect()
