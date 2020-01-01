@@ -25,7 +25,7 @@ def qloss(y_true, y_pred, q):
 def train_model_2(trainX_, trainY_, testX_, num_best):
     
     total_pred = []
-    early_stopping = EarlyStopping(monitor='val_loss', patience=10)
+    early_stopping = EarlyStopping(monitor='val_loss', patience=50)
     
     for q in trange(1, 100):
         
@@ -34,7 +34,7 @@ def train_model_2(trainX_, trainY_, testX_, num_best):
 
         # Train
         model.compile(loss=lambda y_true, y_pred: qloss(y_true, y_pred, q), optimizer='adam')
-        hist2 = model.fit(x=trainX_, y=trainY_, validation_split=0.2, epochs=1000, verbose=0, callbacks=[early_stopping])
+        hist2 = model.fit(x=trainX_, y=trainY_, validation_split=0.2, epochs=1500, verbose=0, callbacks=[early_stopping])
 
         # Predict (test)
         pred = model.predict(x=testX_)
@@ -52,7 +52,7 @@ if __name__ == "__main__":
 
     months = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
     #methods = ['hierarchical/euclidean', 'hierarchical/cityblock', 'hierarchical/DTW', 'kmeans']
-    methods = ['hierarchical/DTW']
+    methods = ['hierarchical/euclidean']
     #data_sets = ['Irish_2010', 'London_2013']
     data_sets = ['Irish_2010']
 
@@ -60,8 +60,6 @@ if __name__ == "__main__":
 
     for times in range(1, 11):
         for data_set in data_sets:
-
-            data = get_data(path, data_set)
 
             for method in methods:
                 for n_clusters in range(2, 11):

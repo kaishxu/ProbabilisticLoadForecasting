@@ -27,21 +27,21 @@ def train_model_1(train, test, week, day, num_best=8):
     trainX, trainTlag, trainTd, trainY = get_train_set_qra(train, week, day, max_lag, max_d)
     n_samples = trainY.shape[0]
     
-    error_train_step1 = np.zeros((24, 2))
-    pred_train = np.zeros((24, 2, n_samples))
-    pred_test = np.zeros((24, 2, 168))
+    error_train_step1 = np.zeros((13, 2))
+    pred_train = np.zeros((13, 2, n_samples))
+    pred_test = np.zeros((13, 2, 168))
 
-    early_stopping = EarlyStopping(monitor='val_loss', patience=10)
+    early_stopping = EarlyStopping(monitor='val_loss', patience=50)
     
-    for lag in trange(1, 25):
+    for lag in trange(12, 25):
         for d in range(1, 3):
             
-            trainX, trainTlag, trainTd, trainY = get_train_set_qra(train, lag, d)
-            testX, testTlag, testTd, testY = get_test_set_qra(train, test, lag, d)
+            trainX, trainTlag, trainTd, trainY = get_train_set_qra(train, week, day, lag, d)
+            testX, testTlag, testTd, testY = get_test_set_qra(train, test, week, day, lag, d)
 
             ## QRA step 1
             # linear model
-            inputs = Input((7 + 24 + lag*3 + d*3,), name='input')
+            inputs = Input((7 + 24 + 3 + lag*3 + d*3,), name='input')
             x = Dense(1, use_bias=True, kernel_initializer='he_normal', bias_initializer='he_normal')(inputs)
             model = Model(inputs=inputs, outputs=x)
 
@@ -50,13 +50,13 @@ def train_model_1(train, test, week, day, num_best=8):
             hist1 = model.fit(x=np.hstack((trainX, trainTlag, trainTd)), y=trainY, validation_split=0.2, epochs=1000, verbose=0, callbacks=[early_stopping])
 
             # Predict (train)
-            pred = model.predict(x=np.hstack((trainX, trainTlag, trainTd))[-n_samples:, :])
-            error_train_step1[lag-1, d-1] = np.sum(np.abs(pred - trainY[-n_samples:, :]))
-            pred_train[lag-1, d-1] = np.squeeze(pred)
+            pred = model.predict(x=np.hstack((trainX, trainTlag, trainTd)))
+            error_train_step1[lag-12, d-1] = np.sum(np.abs(pred[-n_samples:, :] - trainY[-n_samples:, :]))
+            pred_train[lag-12, d-1] = np.squeeze(pred[-n_samples:, :])
             
             # Predict (test)
             pred = model.predict(x=np.hstack((testX, testTlag, testTd)))
-            pred_test[lag-1, d-1] = np.squeeze(pred)
+            pred_test[lag-12, d-1] = np.squeeze(pred)
     
     # prepare for step 2
     series_train_1 = pred_train[np.argsort(error_train_step1[:,0])[:num_best//2], 0]
@@ -82,12 +82,11 @@ if __name__ == "__main__":
 
     months = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
     #methods = ['hierarchical/euclidean', 'hierarchical/cityblock', 'hierarchical/DTW', 'kmeans']
-    methods = ['hierarchical/DTW']
+    methods = ['hierarchical/euclidean']
     #data_sets = ['Irish_2010', 'London_2013']
     data_sets = ['Irish_2010']
 
     path = os.path.abspath(os.path.join(os.getcwd()))
-    path = path.replace('\\', '/')
 
     for times in range(1, 11):
         for data_set in data_sets:
@@ -137,6 +136,7 @@ if __name__ == "__main__":
                             scale[0] = np.max(train[0])
                             scale[1] = np.min(train[0])
                             total_scale.append(scale)
+                            
                             train[0] = (train[0] - scale[1]) / (scale[0] - scale[1])
                             test[0] = (test[0] - scale[1]) / (scale[0] - scale[1])
                             
