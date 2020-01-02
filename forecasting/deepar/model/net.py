@@ -87,7 +87,7 @@ class Net(nn.Module):
                     if t < (self.params.predict_steps - 1):
                         x[self.params.predict_start + t + 1, :, 0] = pred
 
-            sample_mu = torch.median(samples, dim=0)[0]
+            sample_mu = torch.mean(samples, dim=0)[0]
             sample_sigma = samples.std(dim=0)
             return samples, sample_mu, sample_sigma
 

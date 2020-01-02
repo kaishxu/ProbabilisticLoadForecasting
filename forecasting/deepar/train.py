@@ -69,9 +69,7 @@ def train(model: nn.Module,
         optimizer.step()
         loss = loss.item() / params.train_window  # loss per timestep
         loss_epoch[i] = loss
-        if i % 10 == 0:
-            # test_metrics = evaluate(model, loss_fn, test_loader, params, epoch, sample=params.sampling)
-            # model.train()
+        if i % 100 == 0:
             print(f'train_loss: {loss}')
 
     return loss_epoch
@@ -95,10 +93,11 @@ def train_and_evaluate(model: nn.Module,
         restore_file: (string) optional- name of file to restore from (without its extension .pth.tar)
     '''
 
-    print('begin training and evaluation')
+    print('Begin training')
+
     best_test_ND = float('inf')
     train_len = len(train_loader)
-    ND_summary = np.zeros(params.num_epochs)
+    # ND_summary = np.zeros(params.num_epochs)
     loss_summary = np.zeros((train_len * params.num_epochs))
     for epoch in range(params.num_epochs):
         print('Epoch {}/{}'.format(epoch + 1, params.num_epochs))
@@ -108,11 +107,15 @@ def train_and_evaluate(model: nn.Module,
                                                                         test_loader, params, epoch)
         
         # evaluate
-        test_metrics = evaluate(model, loss_fn, test_loader, params, epoch, sample=params.sampling)
+        # test_metrics = evaluate(model, loss_fn, test_loader, params, epoch, sample=params.sampling)
         
-        ND_summary[epoch] = test_metrics['ND']
-        is_best = ND_summary[epoch] <= best_test_ND
-
+        # ND_summary[epoch] = test_metrics['ND']
+        # is_best = ND_summary[epoch] <= best_test_ND
+        
+        # save best metrics for each epoch
+        # if is_best:
+            # best_test_ND = ND_summary[epoch]
+        
         # save weights
         # utils.save_checkpoint({'epoch': epoch + 1,
         #                        'state_dict': model.state_dict(),
@@ -120,9 +123,5 @@ def train_and_evaluate(model: nn.Module,
         #                       epoch=epoch,
         #                       is_best=is_best,
         #                       checkpoint=params.model_dir)
-        
-        # save best metrics for each epoch
-        if is_best:
-            best_test_ND = ND_summary[epoch]
 
-        print('Current Best ND is: %.5f' % best_test_ND)
+        # print('Current Best ND is: %.5f' % best_test_ND)
