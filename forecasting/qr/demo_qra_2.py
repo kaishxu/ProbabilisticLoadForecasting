@@ -22,7 +22,7 @@ def qloss(y_true, y_pred, q):
     tmp2 = q / 100 * (y_true - y_pred)
     return K.mean(K.maximum(tmp1, tmp2))
 
-def train_model_2(trainX_, trainY_, testX_, num_best):
+def train_model_2(trainX, trainY, testX, num_best):
     
     total_pred = []
     early_stopping = EarlyStopping(monitor='val_loss', patience=50)
@@ -34,10 +34,10 @@ def train_model_2(trainX_, trainY_, testX_, num_best):
 
         # Train
         model.compile(loss=lambda y_true, y_pred: qloss(y_true, y_pred, q), optimizer='adam')
-        hist2 = model.fit(x=trainX_, y=trainY_, validation_split=0.2, epochs=1500, verbose=0, callbacks=[early_stopping])
+        hist2 = model.fit(x=trainX, y=trainY, validation_split=0.2, epochs=1500, verbose=0, callbacks=[early_stopping])
 
         # Predict (test)
-        pred = model.predict(x=testX_)
+        pred = model.predict(x=testX)
         total_pred.append(np.squeeze(pred))
     
     total_pred = np.array(total_pred)
@@ -75,13 +75,18 @@ if __name__ == "__main__":
                         trainX_ = np.load(os.path.join(path_result1, f'n_clusters_{n_clusters}_month_{month}_trainX.npy'))
                         trainY_ = np.load(os.path.join(path_result1, f'n_clusters_{n_clusters}_month_{month}_trainY.npy'))
                         testX_ = np.load(os.path.join(path_result1, f'n_clusters_{n_clusters}_month_{month}_testX.npy'))
-
+                        
                         num_best = 8
 
                         total_pred_series = []
                         for i in range(n_clusters):
+                            
+                            error = np.sum(np.abs(trainX_[i] - np.squeeze(trainY_[i])), axis=2)
+                            trainX = np.vstack((trainX_[i, np.argsort(error[:, 0])[:num_best//2], 0, :], trainX_[i, np.argsort(error[:, 1])[:num_best//2], 1, :])).T
+                            trainY = trainY_[i].copy()
+                            testX = np.vstack((testX_[i, np.argsort(error[:, 0])[:num_best//2], 0, :], testX_[i, np.argsort(error[:, 1])[:num_best//2], 1, :])).T
 
-                            pred_series = train_model_2(trainX_[i], trainY_[i], testX_[i], num_best)
+                            pred_series = train_model_2(trainX, trainY, testX, num_best)
                             
                             total_pred_series.append(pred_series)
                             print('cluster:', i)
