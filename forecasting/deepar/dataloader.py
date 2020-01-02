@@ -61,7 +61,7 @@ def get_dow(data_set, month):
         week_value = datetime.strptime(year + '%02d%02d' %(month, i+1), '%Y%m%d').weekday()
         for _ in range(24):
             week.append(week_value)
-    week = np.array(week)   # normalization
+    week = np.array(week)
     return week
 
 # calendar series (hour of day)
@@ -71,7 +71,7 @@ def get_hod(month):
     for i in range(months[month-1]):
         for _ in range(24):
             day.append(_)
-    day = np.array(day)   # normalization
+    day = np.array(day)
     return day
 
 # weather series
