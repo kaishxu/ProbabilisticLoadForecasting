@@ -67,7 +67,7 @@ if __name__ == "__main__":
                         
                         print('times:', times, ', data_set:', data_set, ', method:', method, ', n_clusters:', n_clusters, ', month:', month)
                         
-                        path_result1 = os.path.join(path, 'result', data_set, 'forecasting', 'qra', 'step_1', f'times_{times}', method)
+                        path_result1 = os.path.join(path, 'result', data_set, 'forecasting', 'qra', 'step_1', 'times_1', method)
                         path_result2 = os.path.join(path, 'result', data_set, 'forecasting', 'qra', 'step_2', f'times_{times}', method)
                         if not os.path.exists(path_result2):
                             os.makedirs(path_result2)
