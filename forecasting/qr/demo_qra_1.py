@@ -78,7 +78,7 @@ if __name__ == "__main__":
 
                         total_scale = []
 
-                        path_result = os.path.join(path, 'result', data_set, 'forecasting', 'qra', f'times_{times}', method)
+                        path_result = os.path.join(path, 'result', data_set, 'forecasting', 'qra', 'step_1', method)
                         if not os.path.exists(path_result):
                             os.makedirs(path_result)
 
