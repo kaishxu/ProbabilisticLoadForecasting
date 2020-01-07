@@ -3,62 +3,40 @@ import numpy as np
 import pandas as pd
 import os
 import gc
-
-from keras.layers import Dense, Input
-from keras.callbacks import EarlyStopping
-from keras.models import Model, Sequential
-from keras import backend as K
-import tensorflow as tf
-
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'
-os.environ['CUDA_DEVICE_ORDER'] = 'PCI_BUS_ID'
-os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
 
 from dataloader import get_data, get_train_set_qra, get_test_set_qra, get_weather, get_hod, get_dow
 
-#gpus = tf.config.experimental.list_physical_devices(device_type='GPU')
-#tf.config.experimental.set_memory_growth(gpus[0], True)
-
 def train_model_1(train, test, week, day):
+    
+    d = 2
     
     # to get the num of samples
     max_lag = 24
-    max_d = 2
-    trainX, trainTlag, trainTd, trainY = get_train_set_qra(train, week, day, max_lag, max_d)
+    trainX, trainTlag, trainTd, trainY = get_train_set_qra(train, week, day, max_lag, d)
     n_samples = trainY.shape[0]
     
-    pred_train = np.zeros((24, 2, n_samples))
-    pred_test = np.zeros((24, 2, 168))
-
-    early_stopping = EarlyStopping(monitor='val_loss', patience=50)
+    pred_train = np.zeros((max_lag, n_samples))
+    pred_test = np.zeros((max_lag, 168))
     
-    for lag in trange(1, 25):
-        for d in range(1, 3):
-            
-            trainX, trainTlag, trainTd, trainY = get_train_set_qra(train, week, day, lag, d)
-            testX, testTlag, testTd, testY = get_test_set_qra(train, test, week, day, lag, d)
+    for lag in range(1, max_lag+1):
+        trainX, trainTlag, trainTd, trainY = get_train_set_qra(train, week, day, lag, d)
+        testX, testTlag, testTd, testY = get_test_set_qra(train, test, week, day, lag, d)
 
-            ## QRA step 1
-            # linear model
-            inputs = Input((7 + 24 + 3 + lag*3 + d*3,), name='input')
-            x = Dense(1, use_bias=True, kernel_initializer='he_normal', bias_initializer='he_normal')(inputs)
-            model = Model(inputs=inputs, outputs=x)
+        linreg = LinearRegression()
+        model = linreg.fit(np.hstack((trainX, trainTlag, trainTd)), trainY)
 
-            # Train
-            model.compile(loss='mean_absolute_error', optimizer='adam', metrics=['accuracy'])
-            hist1 = model.fit(x=np.hstack((trainX, trainTlag, trainTd)), y=trainY, validation_split=0.2, epochs=1500, verbose=0, callbacks=[early_stopping])
+        # Predict (train)
+        pred = linreg.predict(np.hstack((trainX, trainTlag, trainTd)))
+        pred_train[lag-1] = np.squeeze(pred[-n_samples:, :])
 
-            # Predict (train)
-            pred = model.predict(x=np.hstack((trainX, trainTlag, trainTd)))
-            pred_train[lag-1, d-1] = np.squeeze(pred[-n_samples:, :])
-            
-            # Predict (test)
-            pred = model.predict(x=np.hstack((testX, testTlag, testTd)))
-            pred_test[lag-1, d-1] = np.squeeze(pred)
-    
+        # Predict (test)
+        pred = linreg.predict(np.hstack((testX, testTlag, testTd)))
+        pred_test[lag-1] = np.squeeze(pred)
+
     # clear
-    del model, pred, hist1
-    tf.keras.backend.clear_session()
+    del model, linreg, pred
     gc.collect()
     return pred_train, pred_test, trainY[-n_samples:, :], testY
 
@@ -67,9 +45,9 @@ if __name__ == "__main__":
 
     months = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
     #methods = ['hierarchical/euclidean', 'hierarchical/cityblock', 'hierarchical/DTW', 'kmeans']
-    methods = ['kmeans']
+    methods = ['hierarchical/euclidean']
     #data_sets = ['Irish_2010', 'London_2013']
-    data_sets = ['London_2013']
+    data_sets = ['Irish_2010']
 
     path = os.path.abspath(os.path.join(os.getcwd()))
 
@@ -100,7 +78,7 @@ if __name__ == "__main__":
 
                         total_scale = []
 
-                        path_result = os.path.join(path, 'result', data_set, 'forecasting', 'qra', 'step_1', f'times_{times}', method)
+                        path_result = os.path.join(path, 'result', data_set, 'forecasting', 'qra', f'times_{times}', method)
                         if not os.path.exists(path_result):
                             os.makedirs(path_result)
 
@@ -119,17 +97,18 @@ if __name__ == "__main__":
                             scale[0] = np.max(train[0])
                             scale[1] = np.min(train[0])
                             total_scale.append(scale)
-                            
+
                             train[0] = (train[0] - scale[1]) / (scale[0] - scale[1])
                             test[0] = (test[0] - scale[1]) / (scale[0] - scale[1])
                             
                             trainX_, testX_, trainY_, testY_ = train_model_1(train, test, week, day)
                             
+                            print('cluster:', i)
+                            
                             total_trainX_.append(trainX_)
                             total_trainY_.append(trainY_)
                             total_testX_.append(testX_)
                             total_testY_.append(testY_)
-                            print('cluster:', i)
                             
                             del sub_series, train, test
                             gc.collect()
@@ -146,4 +125,4 @@ if __name__ == "__main__":
                         np.save(os.path.join(path_result, f'n_clusters_{n_clusters}_month_{month}_testY.npy'), total_testY_)
                         np.save(os.path.join(path_result, f'n_clusters_{n_clusters}_month_{month}_scale.npy'), total_scale)
 
-                        del series, total_scale, total_trainX_, total_trainY_, total_testX_, total_testY_
+                        del series, total_scale
