@@ -16,7 +16,7 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 
-def evaluate(model, loss_fn, test_loader, params, plot_num, sample=True):
+def evaluate(model, loss_fn, test_loader, params, sample=True):
     '''
     Evaluate the model on the test set.
     Args:
@@ -24,7 +24,6 @@ def evaluate(model, loss_fn, test_loader, params, plot_num, sample=True):
         loss_fn: a function that takes outputs and labels per timestep, and then computes the loss for the batch
         test_loader: load test data and labels
         params: (Params) hyperparameters
-        plot_num: (-1): evaluation from evaluate.py; else (epoch): evaluation on epoch
         sample: (boolean) do ancestral sampling or directly use output mu from last time step
     '''
     model.eval()
@@ -61,16 +60,17 @@ def evaluate(model, loss_fn, test_loader, params, plot_num, sample=True):
                 input_mu[:, t] = v_batch[:, 0] * mu + v_batch[:, 1]  # v_batch[:, 1] == 0, useless
                 input_sigma[:, t] = v_batch[:, 0] * sigma
             
-            # 两种写法:
-            # test_batch[params.test_predict_start, :, 0] = input_mu[:, params.test_predict_start-1] / v_batch[:, 0]
-            test_batch[params.test_predict_start, :, 0] = mu
+            if not params.one_step:
+                # 两种写法:
+                # test_batch[params.test_predict_start, :, 0] = input_mu[:, params.test_predict_start-1] / v_batch[:, 0]
+                test_batch[params.test_predict_start, :, 0] = mu
             
             # 计算decoder部分
             if sample:
-                samples, sample_mu, sample_sigma = model.test(test_batch, v_batch, id_batch, hidden, cell, sampling=True)
+                samples, sample_mu, sample_sigma = model.test(test_batch, v_batch, id_batch, hidden, cell, sampling=True, one_step=params.one_step)
                 raw_metrics = utils.update_metrics(raw_metrics, input_mu, input_sigma, sample_mu, labels, params.test_predict_start, samples, relative = params.relative_metrics)
             else:
-                sample_mu, sample_sigma = model.test(test_batch, v_batch, id_batch, hidden, cell)
+                sample_mu, sample_sigma = model.test(test_batch, v_batch, id_batch, hidden, cell, one_step=params.one_step)
                 raw_metrics = utils.update_metrics(raw_metrics, input_mu, input_sigma, sample_mu, labels, params.test_predict_start, relative = params.relative_metrics)
 
         summary_metric = utils.final_metrics(raw_metrics, sampling=sample)

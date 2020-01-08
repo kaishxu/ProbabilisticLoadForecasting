@@ -4,13 +4,12 @@ import pandas as pd
 import os
 import gc
 
-from keras import backend as K
 from l1qr import L1QR
 
 def qloss(y_true, y_pred, q):
     tmp1 = (q / 100 - 1) * (y_true - y_pred)
     tmp2 = q / 100 * (y_true - y_pred)
-    return K.mean(K.maximum(tmp1, tmp2))
+    return np.mean(np.maximum(tmp1, tmp2))
 
 def train_model_2(trainX_, trainY_, testX_):
     

@@ -107,7 +107,7 @@ def train_and_evaluate(model: nn.Module,
                                                                         test_loader, params, epoch)
         
         # evaluate
-        # test_metrics = evaluate(model, loss_fn, test_loader, params, epoch, sample=params.sampling)
+        test_metrics = evaluate(model, loss_fn, test_loader, params, sample=params.sampling)
         
         # ND_summary[epoch] = test_metrics['ND']
         # is_best = ND_summary[epoch] <= best_test_ND

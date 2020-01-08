@@ -70,7 +70,7 @@ class Net(nn.Module):
     def init_cell(self, input_size):
         return torch.zeros(self.params.lstm_layers, input_size, self.params.lstm_hidden_dim, device=self.params.device)
 
-    def test(self, x, v_batch, id_batch, hidden, cell, sampling=False):
+    def test(self, x, v_batch, id_batch, hidden, cell, sampling=False, one_step=False):
         batch_size = x.shape[1]
         if sampling:
             samples = torch.zeros(self.params.sample_times, batch_size, self.params.predict_steps,
@@ -84,8 +84,9 @@ class Net(nn.Module):
                     gaussian = torch.distributions.normal.Normal(mu_de, sigma_de)
                     pred = gaussian.sample()  # not scaled
                     samples[j, :, t] = pred * v_batch[:, 0] + v_batch[:, 1]  # v_batch[:, 1] == 0, useless
-                    if t < (self.params.predict_steps - 1):
-                        x[self.params.predict_start + t + 1, :, 0] = pred
+                    if not one_step:
+                        if t < (self.params.predict_steps - 1):
+                            x[self.params.predict_start + t + 1, :, 0] = pred
 
             sample_mu = torch.mean(samples, dim=0)[0]
             sample_sigma = samples.std(dim=0)
@@ -101,8 +102,9 @@ class Net(nn.Module):
                                                                      id_batch, decoder_hidden, decoder_cell)
                 sample_mu[:, t] = mu_de * v_batch[:, 0] + v_batch[:, 1]  # v_batch[:, 1] == 0, useless
                 sample_sigma[:, t] = sigma_de * v_batch[:, 0]
-                if t < (self.params.predict_steps - 1):
-                    x[self.params.predict_start + t + 1, :, 0] = mu_de
+                if not one_step:
+                    if t < (self.params.predict_steps - 1):
+                        x[self.params.predict_start + t + 1, :, 0] = mu_de
             return sample_mu, sample_sigma
 
 
