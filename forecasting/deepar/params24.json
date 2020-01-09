@@ -1,7 +1,7 @@
 {
     "learning_rate": 1e-3,
     "batch_size": 64,
-    "num_epochs": 1000,
+    "num_epochs": 25,
     "train_window": 192,
     "test_window": 192,
     "predict_start": 168,

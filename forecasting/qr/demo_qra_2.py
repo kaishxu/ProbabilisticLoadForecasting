@@ -46,7 +46,7 @@ if __name__ == "__main__":
 
     path = os.path.abspath(os.path.join(os.getcwd()))
 
-    for times in range(1, 11):
+    for times in range(1, 2):
         for data_set in data_sets:
 
             for method in methods:
