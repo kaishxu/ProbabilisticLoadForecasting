@@ -61,8 +61,6 @@ def evaluate(model, loss_fn, test_loader, params, sample=True):
                 input_sigma[:, t] = v_batch[:, 0] * sigma
             
             if not params.one_step:
-                # 两种写法:
-                # test_batch[params.test_predict_start, :, 0] = input_mu[:, params.test_predict_start-1] / v_batch[:, 0]
                 test_batch[params.test_predict_start, :, 0] = mu
             
             # 计算decoder部分

@@ -7,6 +7,7 @@ import torch
 from torch import nn
 import torch.optim as optim
 from torch.utils.data.sampler import RandomSampler
+from pytorchtools import EarlyStopping
 from tqdm import tqdm
 
 import utils
@@ -14,15 +15,12 @@ import model.net as net
 from evaluate import evaluate
 from dataloader import *
 
-import matplotlib
-matplotlib.use('Agg')
-import matplotlib.pyplot as plt
-
 
 def train(model: nn.Module,
           optimizer: optim,
           loss_fn,
           train_loader: DataLoader,
+          val_loader: DataLoader,
           test_loader: DataLoader,
           params: utils.Params,
           epoch: int) -> float:
@@ -69,14 +67,34 @@ def train(model: nn.Module,
         optimizer.step()
         loss = loss.item() / params.train_window  # loss per timestep
         loss_epoch[i] = loss
-        if i % 100 == 0:
-            print(f'train_loss: {loss}')
+    
+    model.eval()
+    val_loss = torch.zeros(1, device=params.device)
+    for i, (val_batch, idx, labels_batch) in enumerate(val_loader):
+        batch_size = val_batch.shape[0]
 
-    return loss_epoch
+        val_batch = val_batch.permute(1, 0, 2).to(torch.float32).to(params.device)  # not scaled
+        labels_batch = labels_batch.permute(1, 0).to(torch.float32).to(params.device)  # not scaled
+        idx = idx.unsqueeze(0).to(params.device)
+        hidden = model.init_hidden(batch_size)
+        cell = model.init_cell(batch_size)
+
+        for t in range(params.train_window):
+            # if z_t is missing, replace it by output mu from the last time step
+            zero_index = (val_batch[t, :, 0] == 0)
+            if t > 0 and torch.sum(zero_index) > 0:
+                val_batch[t, zero_index, 0] = mu[zero_index]
+            mu, sigma, hidden, cell = model(val_batch[t].unsqueeze_(0).clone(), idx, hidden, cell)
+            val_loss += loss_fn(mu, sigma, labels_batch[t])
+    val_loss = val_loss.item() / params.train_window / len(val_loader)
+    model.train()
+
+    return loss_epoch, val_loss
 
 
 def train_and_evaluate(model: nn.Module,
                        train_loader: DataLoader,
+                       val_loader: DataLoader,
                        test_loader: DataLoader,
                        optimizer: optim, loss_fn,
                        params: utils.Params,
@@ -94,28 +112,29 @@ def train_and_evaluate(model: nn.Module,
     '''
 
     print('Begin training')
-
-    best_test_ND = float('inf')
+    print(model)
     train_len = len(train_loader)
-    # ND_summary = np.zeros(params.num_epochs)
+
     loss_summary = np.zeros((train_len * params.num_epochs))
+    early_stopping = EarlyStopping(patience=10, verbose=True)
+
     for epoch in range(params.num_epochs):
         print('Epoch {}/{}'.format(epoch + 1, params.num_epochs))
 
         # train
-        loss_summary[epoch * train_len:(epoch + 1) * train_len] = train(model, optimizer, loss_fn, train_loader,
+        loss_summary[epoch * train_len:(epoch + 1) * train_len], val_loss = train(model, optimizer, loss_fn, train_loader, val_loader, 
                                                                         test_loader, params, epoch)
-        
+        print(f"train_loss: {np.mean(loss_summary[epoch * train_len:(epoch + 1) * train_len])}")
+
         # evaluate
-        test_metrics = evaluate(model, loss_fn, test_loader, params, sample=params.sampling)
-        
-        # ND_summary[epoch] = test_metrics['ND']
-        # is_best = ND_summary[epoch] <= best_test_ND
-        
-        # save best metrics for each epoch
-        # if is_best:
-            # best_test_ND = ND_summary[epoch]
-        
+        # test_metrics = evaluate(model, loss_fn, test_loader, params, sample=params.sampling)
+
+        # early stop
+        early_stopping(val_loss, model)
+        if early_stopping.early_stop:
+            print("Early stopping")
+            break
+
         # save weights
         # utils.save_checkpoint({'epoch': epoch + 1,
         #                        'state_dict': model.state_dict(),
@@ -123,5 +142,3 @@ def train_and_evaluate(model: nn.Module,
         #                       epoch=epoch,
         #                       is_best=is_best,
         #                       checkpoint=params.model_dir)
-
-        # print('Current Best ND is: %.5f' % best_test_ND)
