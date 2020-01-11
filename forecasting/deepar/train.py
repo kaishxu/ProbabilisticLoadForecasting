@@ -111,13 +111,13 @@ def train_and_evaluate(model: nn.Module,
         # early stop
         early_stopping(val_metrics['test_loss'], model)
         if early_stopping.early_stop:
+            
             print("Early stopping")
-            break
 
-        # save weights
-        # utils.save_checkpoint({'epoch': epoch + 1,
-        #                        'state_dict': model.state_dict(),
-        #                        'optim_dict': optimizer.state_dict()},
-        #                       epoch=epoch,
-        #                       is_best=is_best,
-        #                       checkpoint=params.model_dir)
+            # save weights
+            utils.save_checkpoint({'epoch': epoch + 1,
+                                'state_dict': model.state_dict(),
+                                'optim_dict': optimizer.state_dict()},
+                                filepath=params.model_dir)
+
+            break

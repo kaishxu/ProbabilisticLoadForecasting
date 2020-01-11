@@ -110,7 +110,7 @@ def save_dict_to_json(d, json_path):
         json.dump(d, f, indent=4)
 
 
-def save_checkpoint(state, is_best, epoch, checkpoint, ins_name=-1):
+def save_checkpoint(state, filepath):
     '''
     Saves model and training parameters at checkpoint + 'last.pth.tar'. If is_best==True, also saves
     checkpoint + 'best.pth.tar'
@@ -120,18 +120,7 @@ def save_checkpoint(state, is_best, epoch, checkpoint, ins_name=-1):
         checkpoint: (string) folder where parameters are to be saved
         ins_name: (int) instance index
     '''
-    if ins_name == -1:
-        filepath = os.path.join(checkpoint, f'epoch_{epoch}.pth.tar')
-    else:
-        filepath = os.path.join(checkpoint, f'epoch_{epoch}_ins_{ins_name}.pth.tar')
-    if not os.path.exists(checkpoint):
-        logger.info(f'Checkpoint Directory does not exist! Making directory {checkpoint}')
-        os.mkdir(checkpoint)
     torch.save(state, filepath)
-    logger.info(f'Checkpoint saved to {filepath}')
-    if is_best:
-        shutil.copyfile(filepath, os.path.join(checkpoint, 'best.pth.tar'))
-        logger.info('Best checkpoint copied to best.pth.tar')
 
 
 def load_checkpoint(checkpoint, model, optimizer=None):
