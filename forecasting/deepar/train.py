@@ -20,7 +20,6 @@ def train(model: nn.Module,
           optimizer: optim,
           loss_fn,
           train_loader: DataLoader,
-          val_loader: DataLoader,
           test_loader: DataLoader,
           params: utils.Params,
           epoch: int) -> float:
@@ -67,35 +66,14 @@ def train(model: nn.Module,
         optimizer.step()
         loss = loss.item() / params.train_window  # loss per timestep
         loss_epoch[i] = loss
-    
-    model.eval()
-    val_loss = torch.zeros(1, device=params.device)
-    for i, (val_batch, idx, labels_batch) in enumerate(val_loader):
-        batch_size = val_batch.shape[0]
 
-        val_batch = val_batch.permute(1, 0, 2).to(torch.float32).to(params.device)  # not scaled
-        labels_batch = labels_batch.permute(1, 0).to(torch.float32).to(params.device)  # not scaled
-        idx = idx.unsqueeze(0).to(params.device)
-        hidden = model.init_hidden(batch_size)
-        cell = model.init_cell(batch_size)
-
-        for t in range(params.train_window):
-            # if z_t is missing, replace it by output mu from the last time step
-            zero_index = (val_batch[t, :, 0] == 0)
-            if t > 0 and torch.sum(zero_index) > 0:
-                val_batch[t, zero_index, 0] = mu[zero_index]
-            mu, sigma, hidden, cell = model(val_batch[t].unsqueeze_(0).clone(), idx, hidden, cell)
-            val_loss += loss_fn(mu, sigma, labels_batch[t])
-    val_loss = val_loss.item() / params.train_window / len(val_loader)
-    model.train()
-
-    return loss_epoch, val_loss
+    return loss_epoch
 
 
 def train_and_evaluate(model: nn.Module,
                        train_loader: DataLoader,
-                       val_loader: DataLoader,
                        test_loader: DataLoader,
+                       val_loader: DataLoader,
                        optimizer: optim, loss_fn,
                        params: utils.Params,
                        restore_file: str = None) -> None:  # 箭头无意义，提示函数返回值为None
@@ -122,15 +100,16 @@ def train_and_evaluate(model: nn.Module,
         print('Epoch {}/{}'.format(epoch + 1, params.num_epochs))
 
         # train
-        loss_summary[epoch * train_len:(epoch + 1) * train_len], val_loss = train(model, optimizer, loss_fn, train_loader, val_loader, 
+        loss_summary[epoch * train_len:(epoch + 1) * train_len] = train(model, optimizer, loss_fn, train_loader, 
                                                                         test_loader, params, epoch)
         print(f"train_loss: {np.mean(loss_summary[epoch * train_len:(epoch + 1) * train_len])}")
 
         # evaluate
-        # test_metrics = evaluate(model, loss_fn, test_loader, params, sample=params.sampling)
+        val_metrics = evaluate(model, loss_fn, val_loader, params, sample=params.sampling)
+        test_metrics = evaluate(model, loss_fn, test_loader, params, sample=params.sampling)
 
         # early stop
-        early_stopping(val_loss, model)
+        early_stopping(val_metrics['test_loss'], model)
         if early_stopping.early_stop:
             print("Early stopping")
             break

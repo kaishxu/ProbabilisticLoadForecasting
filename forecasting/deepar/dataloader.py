@@ -101,13 +101,12 @@ def get_data(path, data_set):
     data = np.array(data)
     return data
 
-def prep_data(data, covariates, data_start, window_size, stride_size, num_covariates, num_series, total_time, train = True):
+def prep_data(data, covariates, window_size, stride_size, num_covariates, num_series, cluster, train=True):
 
     time_len = data.shape[0]
     input_size = window_size - stride_size
 
     windows_per_series = np.full((num_series), (time_len - input_size) // stride_size)
-    if train: windows_per_series -= (data_start + stride_size-1) // stride_size
     total_windows = np.sum(windows_per_series)
 
     x_input = np.zeros((total_windows, window_size, 1 + num_covariates + 1), dtype='float32')
@@ -115,32 +114,22 @@ def prep_data(data, covariates, data_start, window_size, stride_size, num_covari
     v_input = np.zeros((total_windows, 2), dtype='float32')
 
     count = 0
-    if not train:
-        covariates = covariates[-time_len:]
     for series in range(num_series):  #穷举series
 
-        cov_age = stats.zscore(np.arange(total_time - data_start[series]))  # 位置变量,序列中的第几个
-        if train:
-            covariates[data_start[series]:time_len, 0] = cov_age[:time_len-data_start[series]]  # 位置变量,序列中的第几个(矫正当前序列)
-        else:
-            covariates[:, 0] = cov_age[-time_len:]  # for test set
-
         for i in range(windows_per_series[series]):  # 穷举window
-            if train:
-                window_start = stride_size * i + data_start[series]
-            else:
-                window_start = stride_size * i  # for test set
+
+            window_start = stride_size * i
             window_end = window_start + window_size  # 定位窗口起始
 
             x_input[count, 1:, 0] = data[window_start:window_end-1, series]
             x_input[count, :, 1:1+num_covariates] = covariates[window_start:window_end, :]  # 相关变量
-            x_input[count, :, -1] = series  # 序列标签
+            x_input[count, :, -1] = cluster[series]  # 序列标签
             label[count, :] = data[window_start:window_end, series]  # 输出
             nonzero_sum = (x_input[count, 1:input_size, 0]!=0).sum()  # 非零个数
             if nonzero_sum == 0:
                 v_input[count, 0] = 0
             else:
-                v_input[count, 0] = np.true_divide(x_input[count, 1:input_size, 0].sum(),nonzero_sum) + 1   # 用非零平均(可以直接平均)
+                v_input[count, 0] = np.true_divide(x_input[count, 1:input_size, 0].sum(), nonzero_sum) + 1   # 用非零平均(可以直接平均)
                 x_input[count, :, 0] = x_input[count, :, 0] / v_input[count, 0]  # scale
                 if train:
                     label[count, :] = label[count, :] / v_input[count, 0]

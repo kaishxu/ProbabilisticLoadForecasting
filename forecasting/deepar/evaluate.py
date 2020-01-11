@@ -73,5 +73,5 @@ def evaluate(model, loss_fn, test_loader, params, sample=True):
 
         summary_metric = utils.final_metrics(raw_metrics, sampling=sample)
         metrics_string = '; '.join('{}: {:05.3f}'.format(k, v) for k, v in summary_metric.items())
-        print('- Full test metrics: ' + metrics_string)
+        print('test metrics: ' + metrics_string)
     return summary_metric
