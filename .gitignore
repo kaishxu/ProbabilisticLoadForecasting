@@ -1,6 +1,12 @@
 # result
 result/
 
+# result pics
+plot/pics
+
+# error
+forecasting/deepar/error
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

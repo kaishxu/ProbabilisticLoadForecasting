@@ -38,6 +38,8 @@ def evaluate(model, loss_fn, test_loader, params, sample=True):
         # v ([batch_size, 2]): scaling factor for each window;
         # labels ([batch_size, train_window]): z_{1:T}.
 
+        result_mu = []
+        result_sigma = []
         for i, (test_batch, id_batch, v, labels) in enumerate(test_loader):
             test_batch = test_batch.permute(1, 0, 2).to(torch.float32).to(params.device)
             id_batch = id_batch.unsqueeze(0).to(params.device)
@@ -70,8 +72,10 @@ def evaluate(model, loss_fn, test_loader, params, sample=True):
             else:
                 sample_mu, sample_sigma = model.test(test_batch, v_batch, id_batch, hidden, cell, one_step=params.one_step)
                 raw_metrics = utils.update_metrics(raw_metrics, input_mu, input_sigma, sample_mu, labels, params.test_predict_start, relative = params.relative_metrics)
+            result_mu.append(sample_mu)
+            result_sigma.append(sample_sigma)
 
         summary_metric = utils.final_metrics(raw_metrics, sampling=sample)
         metrics_string = '; '.join('{}: {:05.3f}'.format(k, v) for k, v in summary_metric.items())
-        print('test metrics: ' + metrics_string)
-    return summary_metric
+        # print('test metrics: ' + metrics_string)
+    return summary_metric, result_mu, result_sigma

@@ -94,7 +94,7 @@ def train_and_evaluate(model: nn.Module,
     train_len = len(train_loader)
 
     loss_summary = np.zeros((train_len * params.num_epochs))
-    early_stopping = EarlyStopping(patience=10, verbose=True)
+    early_stopping = EarlyStopping(patience=5, verbose=True)
 
     for epoch in range(params.num_epochs):
         print('Epoch {}/{}'.format(epoch + 1, params.num_epochs))
@@ -105,8 +105,8 @@ def train_and_evaluate(model: nn.Module,
         print(f"train_loss: {np.mean(loss_summary[epoch * train_len:(epoch + 1) * train_len])}")
 
         # evaluate
-        val_metrics = evaluate(model, loss_fn, val_loader, params, sample=params.sampling)
-        test_metrics = evaluate(model, loss_fn, test_loader, params, sample=params.sampling)
+        val_metrics, tmp_mu, tmp_sigma = evaluate(model, loss_fn, val_loader, params, sample=params.sampling)
+        # test_metrics = evaluate(model, loss_fn, test_loader, params, sample=params.sampling)
 
         # early stop
         early_stopping(val_metrics['test_loss'], model)

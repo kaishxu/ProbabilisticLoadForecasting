@@ -13,22 +13,25 @@ from train import train_and_evaluate
 
 months = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
 
-data_set = 'Irish_2010'
+data_set = 'London_2013'
 path = os.path.abspath(os.path.join(os.getcwd()))
 
 data = get_data(path, data_set)
 
-method = 'hierarchical/euclidean'
+method = 'kmeans'
 
 for times in range(1, 11):
 
     for month in range(1, 13):
-        for n_clusters in range(2, 11):
+        for n_clusters in range(5, 6):
 
             print('times:', times, ', data_set:', data_set, ', method:', method, ', n_clusters:', n_clusters, ', month:', month)
 
-            path_cluster = os.path.join(path, 'result', data_set, 'clustering', 'point', method, f'n_clusters_{n_clusters}.csv')
-            clusters = pd.read_csv(path_cluster, header=None)
+            # path_cluster = os.path.join(path, 'result', data_set, 'clustering', 'point', method, f'n_clusters_{n_clusters}.csv')
+            # clusters = pd.read_csv(path_cluster, header=None)
+
+            clusters = pd.read_csv(os.path.join(path, 'data', 'London_2013_attr_final.csv'))['Cate'] - 1
+
             path_data = os.path.join(path, 'data', 'deepar')
 
             series = data[:, month-1, :months[month-1]*24].T.copy()
@@ -58,11 +61,14 @@ for times in range(1, 11):
 
             # prepare data
             cov = covariates[:-9*24, :].copy()
-            train_x_input, train_v_input, train_label = prep_data(train_data, cov, window_size, stride_size, num_covariates, num_series, clusters[month-1])
+            # train_x_input, train_v_input, train_label = prep_data(train_data, cov, window_size, stride_size, num_covariates, num_series, clusters[month-1])
+            train_x_input, train_v_input, train_label = prep_data(train_data, cov, window_size, stride_size, num_covariates, num_series, clusters)
             cov = covariates[-7*24-168:, :].copy()
-            test_x_input, test_v_input, test_label = prep_data(test_data, cov, window_size, stride_size, num_covariates, num_series, clusters[month-1], train=False)
+            # test_x_input, test_v_input, test_label = prep_data(test_data, cov, window_size, stride_size, num_covariates, num_series, clusters[month-1], train=False)
+            test_x_input, test_v_input, test_label = prep_data(test_data, cov, window_size, stride_size, num_covariates, num_series, clusters, train=False)
             cov = covariates[-9*24-168:-7*24, :].copy()
-            val_x_input, val_v_input, val_label = prep_data(val_data, cov, window_size, stride_size, num_covariates, num_series, clusters[month-1], train=False)
+            # val_x_input, val_v_input, val_label = prep_data(val_data, cov, window_size, stride_size, num_covariates, num_series, clusters[month-1], train=False)
+            val_x_input, val_v_input, val_label = prep_data(val_data, cov, window_size, stride_size, num_covariates, num_series, clusters, train=False)
 
             # params
             json_path = os.path.join(path, 'forecasting', 'deepar', 'params24.json')
@@ -73,7 +79,8 @@ for times in range(1, 11):
             params.sampling = False
             params.one_step = True
 
-            model_dir = os.path.join(path, 'result', data_set, 'forecasting', 'deepar', f'times_{times}', method)
+            # model_dir = os.path.join(path, 'result', data_set, 'forecasting', 'deepar', f'times_{times}', method)
+            model_dir = os.path.join(path, 'result', data_set, 'forecasting_acorn', 'deepar', f'times_{times}')
             if not os.path.exists(model_dir):
                 os.makedirs(model_dir)
             params.model_dir = os.path.join(model_dir, f'n_clusters_{n_clusters}_month_{month}.pth.tar')
@@ -116,5 +123,5 @@ for times in range(1, 11):
                             loss_fn,
                             params,
                             restore_file)
-            break
-        break
+            # break
+        # break

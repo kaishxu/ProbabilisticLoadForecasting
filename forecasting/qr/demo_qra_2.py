@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 import os
 import gc
+from tqdm import tqdm
 
 from l1qr import L1QR
 
@@ -40,9 +41,10 @@ if __name__ == "__main__":
 
     months = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
     #methods = ['hierarchical/euclidean', 'hierarchical/cityblock', 'hierarchical/DTW', 'kmeans']
-    methods = ['hierarchical/euclidean']
+    methods = ['kmeans']
+    
     #data_sets = ['Irish_2010', 'London_2013']
-    data_sets = ['Irish_2010']
+    data_sets = ['London_2013']
 
     path = os.path.abspath(os.path.join(os.getcwd()))
 
@@ -50,13 +52,16 @@ if __name__ == "__main__":
         for data_set in data_sets:
 
             for method in methods:
-                for n_clusters in range(2, 11):
+                for n_clusters in range(5, 6):
                     for month in range(1, 13):
                         
                         print('times:', times, ', data_set:', data_set, ', method:', method, ', n_clusters:', n_clusters, ', month:', month)
                         
-                        path_result1 = os.path.join(path, 'result', data_set, 'forecasting', 'qra', 'step_1', method)
-                        path_result2 = os.path.join(path, 'result', data_set, 'forecasting', 'qra', 'step_2', method)
+                        # path_result1 = os.path.join(path, 'result', data_set, 'forecasting', 'qra', 'step_1', method)
+                        # path_result2 = os.path.join(path, 'result', data_set, 'forecasting', 'qra', 'step_2', method)
+                        path_result1 = os.path.join(path, 'result', data_set, 'forecasting_acorn', 'qra', 'step_1')
+                        path_result2 = os.path.join(path, 'result', data_set, 'forecasting_acorn', 'qra', 'step_2')
+
                         if not os.path.exists(path_result2):
                             os.makedirs(path_result2)
                         
@@ -67,7 +72,7 @@ if __name__ == "__main__":
                         total_pred_series = []
                         for i in range(n_clusters):
                             
-                            pred_series = train_model_2(trainX_, trainY_, testX_)
+                            pred_series = train_model_2(trainX_[i], trainY_[i], testX_[i])
                             
                             total_pred_series.append(pred_series)
                             print('cluster:', i)

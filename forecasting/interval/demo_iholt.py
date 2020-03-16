@@ -24,9 +24,9 @@ def train_model(train, test):
 if __name__ == "__main__":
     months = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
     # methods = ['hierarchical/euclidean', 'hierarchical/cityblock', 'hierarchical/hausdorff', 'kmeans']
-    methods = ['hierarchical/hausdorff']    
+    methods = ['kmeans']
     # data_sets = ['Irish_2010', 'London_2013']
-    data_sets = ['London_2013']
+    data_sets = ['Irish_2010']
 
     path = os.path.abspath(os.path.join(os.getcwd()))
 
@@ -36,7 +36,7 @@ if __name__ == "__main__":
             data = get_data(path, data_set)
 
             for method in methods:
-                for n_clusters in range(2, 11):
+                for n_clusters in range(1, 2):
                     for month in range(1, 13):
                         
                         path_cluster = os.path.join(path, 'result', data_set, 'clustering', 'interval', method, f'n_clusters_{n_clusters}.csv')
